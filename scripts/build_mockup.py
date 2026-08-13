@@ -10,7 +10,7 @@ import json
 
 with open("scratch_world_inner.svg", encoding="utf-8") as f:
     WORLDMAP_SVG = f.read()
-with open("scratch_rows2.json", encoding="utf-8") as f:
+with open("scratch_rows3.json", encoding="utf-8") as f:
     ROWS_JSON = f.read()
 with open("scratch_logo_b64.txt", encoding="ascii") as f:
     LOGO_B64 = f.read().strip()
@@ -132,7 +132,11 @@ TEMPLATE = r"""<!doctype html>
   .filter-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;background:#fff;border:1px solid var(--border);border-radius:8px;padding:12px 14px;margin-bottom:18px;}
   .filter-field{display:flex;flex-direction:column;gap:3px;}
   .filter-field label{font-size:10px;color:var(--muted);font-weight:700;}
-  .filter-field select{font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);min-width:150px;}
+  .filter-field select, .filter-field input[type=date]{font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);min-width:150px;}
+  .quick-n-wrap{display:flex;gap:6px;}
+  .quick-n-wrap input[type=number]{font-size:12px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text);width:64px;}
+  .btn-recent-apply{font-size:11.5px;color:var(--navy-2);background:#eef2f7;border:1px solid var(--border);border-radius:6px;padding:0 10px;cursor:pointer;white-space:nowrap;}
+  .btn-recent-apply:hover{background:#e2e8f0;}
   .filter-reset{font-size:11.5px;color:var(--navy-2);background:#eef2f7;border:1px solid var(--border);border-radius:6px;padding:0 12px;height:31px;cursor:pointer;}
   .filter-reset:hover{background:#e2e8f0;}
   .filter-readout{margin-left:auto;font-size:12px;color:var(--navy);font-weight:700;background:#eef2f7;padding:7px 12px;border-radius:6px;white-space:nowrap;}
@@ -328,9 +332,10 @@ __WORLDMAP__
 <script>
 const ROWS_DATA = __ROWS_JSON__;
 const ROWS = ROWS_DATA.rows;
-/* row index: 0 customer, 1 plant, 2 category, 3 ym, 4 amount, 5 defect, 6 country,
-   7 status, 8 severity, 9 lead_to_receive, 10 lead_to_confirm(or null), 11 cycle_time(or null) */
-const ALL_MONTHS = ROWS_DATA.months;
+/* row index: 0 customer, 1 plant, 2 category, 3 occurrence_date(YYYY-MM-DD), 4 amount, 5 defect,
+   6 country, 7 status, 8 severity, 9 lead_to_receive, 10 lead_to_confirm(or null), 11 cycle_time(or null) */
+const DATE_MIN = ROWS_DATA.minDate;
+const DATE_MAX = ROWS_DATA.maxDate;
 const ALL_CUSTOMERS = ROWS_DATA.customers;
 const ALL_PLANTS = ROWS_DATA.plants;
 const ALL_DEFECTS = ROWS_DATA.defects;
@@ -364,6 +369,24 @@ function pctBadge(n){
   return '<span class="badge '+cls+'">'+arrow+' '+Math.abs(n).toFixed(1)+'%</span>';
 }
 function pctChange(cur,prev){ if(!prev) return null; return (cur-prev)/prev*100; }
+function monthsBetween(startStr, endStr){
+  const months = [];
+  let [y,m] = startStr.split('-').slice(0,2).map(Number);
+  const [ey,em] = endStr.split('-').slice(0,2).map(Number);
+  while(y<ey || (y===ey && m<=em)){
+    months.push(y+'-'+String(m).padStart(2,'0'));
+    m++; if(m>12){ m=1; y++; }
+  }
+  return months;
+}
+function addMonthsClamped(dateStr, delta, clampMin){
+  const d = new Date(dateStr+'T00:00:00Z');
+  d.setUTCMonth(d.getUTCMonth()+delta);
+  d.setUTCDate(1);
+  let out = d.toISOString().slice(0,10);
+  if(clampMin && out<clampMin) out = clampMin;
+  return out;
+}
 
 /* ---------- Nav ---------- */
 document.querySelectorAll('.nav-item').forEach(btn=>{
@@ -409,7 +432,7 @@ function drawRankBars(id, items, opts){
 }
 
 /* ================= Common filters (shared across all 3 pages) ================= */
-const filters = {customer:'전체', plant:'전체', category:'전체', period:'all'};
+const filters = {customer:'전체', plant:'전체', category:'전체', start:DATE_MIN, end:DATE_MAX};
 
 function populateFilters(){
   document.querySelectorAll('.f-customer').forEach(sel=>{
@@ -421,34 +444,28 @@ function populateFilters(){
   document.querySelectorAll('.f-category').forEach(sel=>{
     ALL_CATEGORIES.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=CAT_KOR[c]||c; sel.appendChild(o); });
   });
+  document.querySelectorAll('.f-start, .f-end').forEach(el=>{ el.min = DATE_MIN; el.max = DATE_MAX; });
 }
 
 function syncFilterUI(){
   document.querySelectorAll('.f-customer').forEach(el=>{ el.value = filters.customer; });
   document.querySelectorAll('.f-plant').forEach(el=>{ el.value = filters.plant; });
   document.querySelectorAll('.f-category').forEach(el=>{ el.value = filters.category; });
-  document.querySelectorAll('.f-period').forEach(el=>{ el.value = filters.period; });
+  document.querySelectorAll('.f-start').forEach(el=>{ el.value = filters.start; });
+  document.querySelectorAll('.f-end').forEach(el=>{ el.value = filters.end; });
 }
 
-function periodMinYm(period){
-  if(period==='all') return ALL_MONTHS[0];
-  const n = period==='12m'?12: period==='6m'?6:3;
-  const idx = Math.max(0, ALL_MONTHS.length-n);
-  return ALL_MONTHS[idx];
-}
-
-/* customer/plant/category always apply; period optionally ignored (KPI cards define their own windows) */
-function filteredRows(ignorePeriod){
-  const minYm = ignorePeriod ? null : periodMinYm(filters.period);
+/* customer/plant/category always apply; date range optionally ignored (KPI cards define their own fixed windows) */
+function filteredRows(ignoreDateRange){
   return ROWS.filter(r=>
     (filters.customer==='전체' || r[0]===filters.customer) &&
     (filters.plant==='전체' || r[1]===filters.plant) &&
     (filters.category==='전체' || r[2]===filters.category) &&
-    (ignorePeriod || r[3] >= minYm)
+    (ignoreDateRange || (r[3] >= filters.start && r[3] <= filters.end))
   );
 }
 
-['customer','plant','category','period'].forEach(key=>{
+['customer','plant','category'].forEach(key=>{
   const cls = '.f-'+key;
   document.querySelectorAll(cls).forEach(el=>{
     el.addEventListener('change', e=>{
@@ -458,9 +475,48 @@ function filteredRows(ignorePeriod){
     });
   });
 });
+document.querySelectorAll('.f-start').forEach(el=>{
+  el.addEventListener('change', e=>{
+    let v = e.target.value || DATE_MIN;
+    if(v>filters.end) v = filters.end;
+    filters.start = v;
+    syncFilterUI();
+    rebuildAll();
+  });
+});
+document.querySelectorAll('.f-end').forEach(el=>{
+  el.addEventListener('change', e=>{
+    let v = e.target.value || DATE_MAX;
+    if(v<filters.start) v = filters.start;
+    filters.end = v;
+    syncFilterUI();
+    rebuildAll();
+  });
+});
+function applyRecentMonths(nRaw){
+  const n = parseInt(nRaw,10);
+  if(!n || n<1) return;
+  filters.end = DATE_MAX;
+  filters.start = addMonthsClamped(DATE_MAX, -(n-1), DATE_MIN);
+  syncFilterUI();
+  rebuildAll();
+}
+document.querySelectorAll('.btn-recent-apply').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const input = btn.parentElement.querySelector('.f-recent-n');
+    applyRecentMonths(input.value);
+  });
+});
+document.querySelectorAll('.f-recent-n').forEach(el=>{
+  el.addEventListener('keydown', e=>{
+    if(e.key==='Enter'){ applyRecentMonths(e.target.value); }
+  });
+});
 document.querySelectorAll('.filter-reset').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    filters.customer='전체'; filters.plant='전체'; filters.category='전체'; filters.period='all';
+    filters.customer='전체'; filters.plant='전체'; filters.category='전체';
+    filters.start=DATE_MIN; filters.end=DATE_MAX;
+    document.querySelectorAll('.f-recent-n').forEach(el=>{ el.value=''; });
     syncFilterUI();
     rebuildAll();
   });
@@ -473,22 +529,22 @@ function updateReadouts(rows){
 }
 
 /* ================= Page 1 : Executive Summary ================= */
-function computeKpiWindows(rowsNoPeriod){
-  function stat(minYm,maxYm){
-    const sub = rowsNoPeriod.filter(r=> r[3]>=minYm && r[3]<=maxYm);
+function computeKpiWindows(rowsNoRange){
+  function stat(minDate,maxDate){
+    const sub = rowsNoRange.filter(r=> r[3]>=minDate && r[3]<=maxDate);
     return {count: sub.length, amount: sub.reduce((s,r)=>s+r[4],0)};
   }
   return {
-    last1m: stat('2025-12','2025-12'), last1m_prev: stat('2024-12','2024-12'),
-    last3m: stat('2025-10','2025-12'), last3m_prev: stat('2024-10','2024-12'),
-    last6m: stat('2025-07','2025-12'), last6m_prev: stat('2024-07','2024-12'),
-    last12m: stat('2025-01','2025-12'), last12m_prev: stat('2024-01','2024-12'),
-    all: stat('2023-01','2025-12'),
+    last1m: stat('2025-12-01','2025-12-31'), last1m_prev: stat('2024-12-01','2024-12-31'),
+    last3m: stat('2025-10-01','2025-12-31'), last3m_prev: stat('2024-10-01','2024-12-31'),
+    last6m: stat('2025-07-01','2025-12-31'), last6m_prev: stat('2024-07-01','2024-12-31'),
+    last12m: stat('2025-01-01','2025-12-31'), last12m_prev: stat('2024-01-01','2024-12-31'),
+    all: stat('2023-01-01','2025-12-31'),
   };
 }
 
-function drawKPIRow(rowsNoPeriod){
-  const k = computeKpiWindows(rowsNoPeriod);
+function drawKPIRow(rowsNoRange){
+  const k = computeKpiWindows(rowsNoRange);
   const defs = [
     {label:'최근 1개월', sub:'2025.12', cur:k.last1m, prev:k.last1m_prev},
     {label:'최근 3개월', sub:'2025.10~12', cur:k.last3m, prev:k.last3m_prev},
@@ -502,7 +558,7 @@ function drawKPIRow(rowsNoPeriod){
     const amtPct = pctChange(d.cur.amount, d.prev? d.prev.amount:null);
     html += '<div class="kpi-card '+(d.hl?'hl':'')+'">'
       +'<div class="kpi-label">'+d.label+'</div>'
-      +'<div class="kpi-sub">'+d.sub+(d.prev?' · 전년동기比':'')+' · 기간 필터 미적용</div>'
+      +'<div class="kpi-sub">'+d.sub+(d.prev?' · 전년동기比':'')+' · 상단 기간 필터 미적용</div>'
       +'<div class="kpi-main">'+d.cur.count.toLocaleString()+'<span class="kpi-unit">건</span></div>'
       +'<div class="kpi-change">'+pctBadge(countPct)+'</div>'
       +'<div class="kpi-amount">'+fmtUSD(d.cur.amount)+'</div>'
@@ -513,9 +569,9 @@ function drawKPIRow(rowsNoPeriod){
 }
 
 function drawTrendChart(rows){
-  const months = ALL_MONTHS.filter(m=>m>=periodMinYm(filters.period));
+  const months = monthsBetween(filters.start, filters.end);
   const byMonth = {}; months.forEach(m=>{ byMonth[m]={count:0,amount:0}; });
-  rows.forEach(r=>{ const b=byMonth[r[3]]; if(b){ b.count++; b.amount+=r[4]; } });
+  rows.forEach(r=>{ const b=byMonth[r[3].slice(0,7)]; if(b){ b.count++; b.amount+=r[4]; } });
   const data = months.map(m=>({ym:m, count:byMonth[m].count, amount:byMonth[m].amount}));
 
   const W=1120,H=300,padL=46,padR=54,padT=26,padB=40;
@@ -619,15 +675,15 @@ function drawBubbleMap(rows){
   document.getElementById('mapInsight2').innerHTML = '평균 처리기간이 가장 긴 국가는 <b>'+COUNTRY_NAME[byCycle[0].country]+'</b> (평균 '+byCycle[0].avg_cycle+'일) 입니다.';
 }
 
-function rebuildPage1(rowsNoPeriod, rowsWithPeriod){
-  drawKPIRow(rowsNoPeriod);
-  drawTrendChart(rowsWithPeriod);
-  drawBubbleMap(rowsWithPeriod);
+function rebuildPage1(rowsNoRange, rowsInRange){
+  drawKPIRow(rowsNoRange);
+  drawTrendChart(rowsInRange);
+  drawBubbleMap(rowsInRange);
 
-  const custSums = {}; rowsWithPeriod.forEach(r=>{ custSums[r[0]] = (custSums[r[0]]||0)+r[4]; });
+  const custSums = {}; rowsInRange.forEach(r=>{ custSums[r[0]] = (custSums[r[0]]||0)+r[4]; });
   drawRankBars('rankCustomer', Object.entries(custSums).map(([k,v])=>({key:k,label:k,value:v})), {topN:5});
 
-  const defSums = {}; rowsWithPeriod.forEach(r=>{ defSums[r[5]] = (defSums[r[5]]||0)+r[4]; });
+  const defSums = {}; rowsInRange.forEach(r=>{ defSums[r[5]] = (defSums[r[5]]||0)+r[4]; });
   drawRankBars('rankDefect', Object.entries(defSums).map(([k,v])=>({key:k,label:k,value:v})), {topN:5});
 }
 
@@ -636,7 +692,7 @@ function drawSmallMultiplesDynamic(rows, months, cats){
   const data = {};
   cats.forEach(c=>{ data[c]={}; months.forEach(m=>{ data[c][m]=0; }); });
   rows.forEach(r=>{
-    const c=r[2], m=r[3];
+    const c=r[2], m=r[3].slice(0,7);
     if(data[c] && data[c][m]!==undefined){ data[c][m]+=r[4]; }
   });
   let html='';
@@ -697,7 +753,7 @@ function drawHeatmapDynamic(rows, plants, defects){
 }
 
 function rebuildPage2(rows){
-  const months = ALL_MONTHS.filter(m=>m>=periodMinYm(filters.period));
+  const months = monthsBetween(filters.start, filters.end);
   const catsToShow = filters.category==='전체' ? ALL_CATEGORIES : [filters.category];
   drawSmallMultiplesDynamic(rows, months, catsToShow);
 
@@ -808,12 +864,12 @@ function rebuildPage3(rows){
 
 /* ================= Orchestration ================= */
 function rebuildAll(){
-  const rowsNoPeriod = filteredRows(true);
-  const rowsWithPeriod = filteredRows(false);
-  updateReadouts(rowsWithPeriod);
-  rebuildPage1(rowsNoPeriod, rowsWithPeriod);
-  rebuildPage2(rowsWithPeriod);
-  rebuildPage3(rowsWithPeriod);
+  const rowsNoRange = filteredRows(true);
+  const rowsInRange = filteredRows(false);
+  updateReadouts(rowsInRange);
+  rebuildPage1(rowsNoRange, rowsInRange);
+  rebuildPage2(rowsInRange);
+  rebuildPage3(rowsInRange);
 }
 
 populateFilters();
@@ -828,13 +884,14 @@ FILTER_BAR_HTML = r"""<div class="filter-bar">
         <div class="filter-field"><label>고객사</label><select class="f-customer"><option value="전체">전체</option></select></div>
         <div class="filter-field"><label>생산공장</label><select class="f-plant"><option value="전체">전체</option></select></div>
         <div class="filter-field"><label>부품 카테고리</label><select class="f-category"><option value="전체">전체</option></select></div>
-        <div class="filter-field"><label>기간</label>
-          <select class="f-period">
-            <option value="all">전체 기간 (2023.01~2025.12)</option>
-            <option value="12m">최근 12개월</option>
-            <option value="6m">최근 6개월</option>
-            <option value="3m">최근 3개월</option>
-          </select>
+        <div class="filter-field"><label>시작일</label><input type="date" class="f-start"></div>
+        <div class="filter-field"><label>종료일</label><input type="date" class="f-end"></div>
+        <div class="filter-field">
+          <label>조회 기준</label>
+          <div class="quick-n-wrap">
+            <input type="number" class="f-recent-n" min="1" max="60" placeholder="N">
+            <button class="btn-recent-apply" type="button">최근 N개월</button>
+          </div>
         </div>
         <button class="filter-reset" type="button">필터 초기화</button>
         <div class="filter-readout"></div>
