@@ -70,7 +70,9 @@
   .row-2{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-top:16px;}
   .row-2-b{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-top:16px;}
   .row-2-eq{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;}
-  .stack{display:flex;flex-direction:column;gap:16px;}
+  .stack{display:flex;flex-direction:column;gap:16px;height:100%;}
+  .stack .card{flex:1;display:flex;flex-direction:column;}
+  .stack .card > div:last-child{flex:1;}
   .full{margin-top:16px;}
 
   svg{max-width:100%;height:auto;display:block;}
@@ -230,6 +232,10 @@
           <div class="card">
             <h2>Top 5 결함유형 <span class="card-sub">(클레임 금액 기준)</span></h2>
             <div id="rankDefect"></div>
+          </div>
+          <div class="card">
+            <h2>Top 5 생산공장 <span class="card-sub">(클레임 금액 기준)</span></h2>
+            <div id="rankPlant"></div>
           </div>
         </div>
       </div>
@@ -713,6 +719,9 @@ function rebuildPage1(rowsNoRange, rowsInRange){
 
   const defSums = {}; rowsInRange.forEach(r=>{ defSums[r[5]] = (defSums[r[5]]||0)+r[4]; });
   drawRankBars('rankDefect', Object.entries(defSums).map(([k,v])=>({key:k,label:k,value:v})), {topN:5});
+
+  const plantSums = {}; rowsInRange.forEach(r=>{ plantSums[r[1]] = (plantSums[r[1]]||0)+r[4]; });
+  drawRankBars('rankPlant', Object.entries(plantSums).map(([k,v])=>({key:k,label:k,value:v})), {topN:5});
 }
 
 /* ================= Page 2 : 원인 드릴다운 ================= */
