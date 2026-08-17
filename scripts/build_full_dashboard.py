@@ -77,6 +77,26 @@ CALC_FIELDS = [
      "DATETRUNC('month', [occurrence_date])"),
 ]
 
+# 1페이지 KPI 카드 5개(최근1/3/6/12개월 + 전체)용 조건부 계산식. 실제 <filter> XML은 아직
+# 검증 안 된 영역이라(대시보드 요구사항.md 리스크) 우회 - IF로 기간 밖 값을 NULL 처리한 뒤
+# SUM하면 <filter> 없이도 기간별 KPI를 만들 수 있음. "전체" 카드는 원본 필드를 그대로 사용.
+KPI_PERIODS = [
+    ("Last1M", "2025-12-01", "2025-12-31"),
+    ("Last3M", "2025-10-01", "2025-12-31"),
+    ("Last6M", "2025-07-01", "2025-12-31"),
+    ("Last12M", "2025-01-01", "2025-12-31"),
+]
+for pname, start, end in KPI_PERIODS:
+    cond = f"[occurrence_date] >= #{start}# AND [occurrence_date] <= #{end}#"
+    CALC_FIELDS.append((
+        f"KPI{pname}Amount", f"KPI {pname} Amount", "real", "measure", "quantitative",
+        f"IF {cond} THEN [claim_amount_usd] END",
+    ))
+    CALC_FIELDS.append((
+        f"KPI{pname}Count", f"KPI {pname} Count", "integer", "measure", "quantitative",
+        f"IF {cond} THEN 1 END",
+    ))
+
 # 필드 레지스트리: name -> (datatype, role, type)  (raw + calc 통합)
 FIELD_TYPES = {name: (dtype, role, ftype) for name, dtype, role, ftype in COLUMNS}
 for internal, caption, dtype, role, ftype, formula in CALC_FIELDS:
@@ -352,10 +372,12 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
     </worksheet>"""
 
 
-def ws_kpi_text(name):
-    """단순화된 KPI 워크시트: 전체 기간 건수·금액 텍스트 테이블 (5기간 카드는 2차 고도화 예정)."""
-    cci = col_instance("claim_id", "Count")
-    mci = col_instance("claim_amount_usd", "Sum")
+def ws_kpi_text(name, count_field="claim_id", amount_field="claim_amount_usd"):
+    """기간별 KPI 카드: 건수(Count/Sum) + 금액(Sum) 텍스트. count_field/amount_field로
+    기간 조건부 계산식(KPI_Last1M_Count 등)을 넘기면 <filter> 없이 기간별 카드를 만들 수 있음."""
+    count_agg = "Sum" if count_field != "claim_id" else "Count"
+    cci = col_instance(count_field, count_agg)
+    mci = col_instance(amount_field, "Sum")
     deps = datasource_dependencies([cci, mci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
@@ -438,7 +460,11 @@ def add(name, xml):
 
 
 # Page 1
-add("1_KPI", ws_kpi_text("1_KPI"))
+add("1_KPI_1M", ws_kpi_text("1_KPI_1M", "KPILast1MCount", "KPILast1MAmount"))
+add("1_KPI_3M", ws_kpi_text("1_KPI_3M", "KPILast3MCount", "KPILast3MAmount"))
+add("1_KPI_6M", ws_kpi_text("1_KPI_6M", "KPILast6MCount", "KPILast6MAmount"))
+add("1_KPI_12M", ws_kpi_text("1_KPI_12M", "KPILast12MCount", "KPILast12MAmount"))
+add("1_KPI_All", ws_kpi_text("1_KPI_All"))
 add("1_Trend", ws_trend("1_Trend", "OccurrenceMonth", "claim_amount_usd", "Sum"))
 add("1_Map", ws_map("1_Map"))
 add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd"))
@@ -467,27 +493,40 @@ WORKSHEETS_XML = "\n".join(worksheet_blocks)
 # 6) 대시보드 3개 - 대시보드 기획안.html의 그리드 구조를 가로/세로 컨테이너 트리로 재현.
 #    ('leaf', 워크시트이름) | ('vert'|'horz', [자식 노드...])
 # ------------------------------------------------------------------
+def W(weight, node):
+    """render_layout의 vert/horz 자식에 상대적 비중(weight)을 지정. 기본 비중은 1."""
+    return ("w", weight, node)
+
+
+TITLE_COLOR = "#16324F"
+
 PAGE_LAYOUTS = {
     "1. 종합 요약": ("vert", [
-        ("leaf", "1_KPI"),
-        ("leaf", "1_Trend"),
-        ("horz", [
+        W(2, ("text", "종합 요약", 24, TITLE_COLOR)),
+        W(7, ("horz", [
+            ("leaf", "1_KPI_1M"), ("leaf", "1_KPI_3M"), ("leaf", "1_KPI_6M"),
+            ("leaf", "1_KPI_12M"), ("leaf", "1_KPI_All"),
+        ])),
+        W(7, ("leaf", "1_Trend")),
+        W(12, ("horz", [
             ("leaf", "1_Map"),
             ("vert", [("leaf", "1_Top5_Customer"), ("leaf", "1_Top5_Defect"), ("leaf", "1_Top5_Plant")]),
-        ]),
+        ])),
     ]),
     "2. 원인 드릴다운": ("vert", [
-        ("horz", [("leaf", f"2_SM_{i}") for i in range(1, 6)]),
-        ("horz", [
+        W(2, ("text", "원인 드릴다운", 24, TITLE_COLOR)),
+        W(8, ("horz", [("leaf", f"2_SM_{i}") for i in range(1, 6)])),
+        W(12, ("horz", [
             ("leaf", "2_Heatmap"),
             ("vert", [("leaf", "2_Rank_Category"), ("leaf", "2_Rank_DefectCount")]),
-        ]),
-        ("leaf", "2_CustComposition"),
+        ])),
+        W(6, ("leaf", "2_CustComposition")),
     ]),
     "3. 리드타임 효율": ("vert", [
-        ("horz", [("leaf", "3_Status"), ("leaf", "3_Severity")]),
-        ("horz", [("leaf", "3_LeadTime_Receive"), ("leaf", "3_LeadTime_Confirm")]),
-        ("horz", [("leaf", "3_Cycle_Customer"), ("leaf", "3_Cycle_Plant")]),
+        W(2, ("text", "리드타임 · 효율", 24, TITLE_COLOR)),
+        W(9, ("horz", [("leaf", "3_Status"), ("leaf", "3_Severity")])),
+        W(9, ("horz", [("leaf", "3_LeadTime_Receive"), ("leaf", "3_LeadTime_Confirm")])),
+        W(9, ("horz", [("leaf", "3_Cycle_Customer"), ("leaf", "3_Cycle_Plant")])),
     ]),
 }
 
@@ -495,8 +534,11 @@ PAGE_LAYOUTS = {
 def flatten_leaves(node):
     if node[0] == "leaf":
         return [node[1]]
+    if node[0] == "text":
+        return []
     out = []
     for child in node[1]:
+        child = child[2] if child[0] == "w" else child  # ("w", weight, node) 래퍼 해제
         out.extend(flatten_leaves(child))
     return out
 
@@ -548,20 +590,29 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_id
         style = "\n" + ZONE_STYLE if with_style else ""
         return f"          <zone h='{h}' id='{zid}' name='{sn}' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
-    children = node[1]
-    n = len(children)
+    if kind == "text":
+        text, fontsize, color = node[1], node[2], node[3]
+        zid = id_gen()
+        style = "\n" + ZONE_STYLE if with_style else ""
+        return (f"          <zone h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <formatted-text><run bold='true' fontcolor='{color}' fontsize='{fontsize}'>{text}</run></formatted-text>{style}\n"
+                f"          </zone>")
+
+    children = [(_c[2], _c[1]) if _c[0] == "w" else (_c, 1) for _c in node[1]]  # (node, weight)
+    total_w = sum(wt for _, wt in children)
     cid = id_gen()
     parts = []
+    pos = 0
     if kind == "vert":
-        ch_h = h // n
-        for i, child in enumerate(children):
-            cy = y + i * ch_h
-            parts.append(render_layout(child, id_gen, with_style, x, cy, w, ch_h, sheet_zone_ids, reuse_ids))
+        for child, wt in children:
+            ch_h = h * wt // total_w
+            parts.append(render_layout(child, id_gen, with_style, x, y + pos, w, ch_h, sheet_zone_ids, reuse_ids))
+            pos += ch_h
     else:  # horz
-        ch_w = w // n
-        for i, child in enumerate(children):
-            cx = x + i * ch_w
-            parts.append(render_layout(child, id_gen, with_style, cx, y, ch_w, h, sheet_zone_ids, reuse_ids))
+        for child, wt in children:
+            ch_w = w * wt // total_w
+            parts.append(render_layout(child, id_gen, with_style, x + pos, y, ch_w, h, sheet_zone_ids, reuse_ids))
+            pos += ch_w
     inner_xml = "\n".join(parts)
     style = "\n" + ZONE_STYLE if with_style else ""
     return f"""        <zone h='{h}' id='{cid}' param='{kind}' type-v2='layout-flow' w='{w}' x='{x}' y='{y}'>
