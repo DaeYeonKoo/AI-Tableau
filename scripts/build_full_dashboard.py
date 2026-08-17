@@ -187,8 +187,16 @@ def instance_xml(ci):
             f"name='{ci['inst_name']}' pivot='key' type='{ci['ftype']}' />")
 
 
-def datasource_dependencies(cis):
-    """cis: col_instance() 결과 리스트. 중복 없이 base column + column-instance 블록 생성."""
+WORKSHEET_CIS = {}  # worksheet name -> cis 리스트 (대시보드의 datasource-dependencies 합치는 데 재사용)
+
+
+def datasource_dependencies(cis, sheet_name=None):
+    """cis: col_instance() 결과 리스트. 중복 없이 base column + column-instance 블록 생성.
+    sheet_name을 주면 WORKSHEET_CIS에 등록해서, 이 워크시트를 담는 대시보드가 자기 자신의
+    datasource-dependencies를 만들 때 재사용할 수 있게 함 (2805CF18 원인으로 추정되는,
+    대시보드에 datasource-dependencies가 비어있던 문제 대응)."""
+    if sheet_name is not None:
+        WORKSHEET_CIS[sheet_name] = cis
     seen_base, seen_inst = set(), set()
     base_parts, inst_parts = [], []
     for ci in cis:
@@ -214,7 +222,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar"):
         cci = col_instance(color_dim, "None")
         cis.append(cci)
         color_xml = f"\n              <color column='{cci['qualified']}' />"
-    deps = datasource_dependencies(cis)
+    deps = datasource_dependencies(cis, sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -247,7 +255,7 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
     rci = col_instance(dim_row, "None")
     cci = col_instance(dim_col, "None")
     mci = col_instance(meas, meas_agg)
-    deps = datasource_dependencies([rci, cci, mci])
+    deps = datasource_dependencies([rci, cci, mci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -280,7 +288,7 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
 def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line"):
     dci = col_instance(dim, "None")
     mci = col_instance(meas, meas_agg)
-    deps = datasource_dependencies([dci, mci])
+    deps = datasource_dependencies([dci, mci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -313,7 +321,7 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
     dci = col_instance("OccurrenceMonth", "None")
     mci = col_instance(meas, "Sum")
     fci = col_instance("part_category", "None")
-    deps = datasource_dependencies([dci, mci, fci])
+    deps = datasource_dependencies([dci, mci, fci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -348,7 +356,7 @@ def ws_kpi_text(name):
     """단순화된 KPI 워크시트: 전체 기간 건수·금액 텍스트 테이블 (5기간 카드는 2차 고도화 예정)."""
     cci = col_instance("claim_id", "Count")
     mci = col_instance("claim_amount_usd", "Sum")
-    deps = datasource_dependencies([cci, mci])
+    deps = datasource_dependencies([cci, mci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -384,7 +392,7 @@ def ws_map(name):
     lon = col_instance("Longitude (generated)", "None")
     ctry = col_instance("claim_country", "None")
     mci = col_instance("claim_amount_usd", "Sum")
-    deps = datasource_dependencies([lat, lon, ctry, mci])
+    deps = datasource_dependencies([lat, lon, ctry, mci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -486,12 +494,26 @@ def build_dashboard(dash_name, sheet_names):
         )
     outer_id = next_zone_id()
     zones_xml = "\n".join(zones_inner)
+    # 대시보드에 담기는 모든 워크시트가 쓰는 필드의 합집합으로 자체 datasource-dependencies 구성.
+    # 확정된 content model상 datasource-dependencies는 zones보다 먼저 와야 함(§style,size,
+    # datasources,datasource-dependencies*,zones,devicelayouts). 비어 있던 게 2805CF18의
+    # 유력한 원인으로 추정 - 이번 수정의 핵심.
+    union_cis, seen = [], set()
+    for sn in sheet_names:
+        for ci in WORKSHEET_CIS.get(sn, []):
+            if ci["inst_name"] not in seen:
+                seen.add(ci["inst_name"])
+                union_cis.append(ci)
+    deps_xml = datasource_dependencies(union_cis)
     return f"""    <dashboard name='{dash_name}'>
       <style />
       <size sizing-mode='automatic' />
       <datasources>
         <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
       </datasources>
+      <datasource-dependencies datasource='{DS_NAME}'>
+{deps_xml}
+      </datasource-dependencies>
       <zones>
         <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
 {zones_xml}
