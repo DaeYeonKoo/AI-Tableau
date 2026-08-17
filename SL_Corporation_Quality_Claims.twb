@@ -6,15 +6,15 @@
   <preferences />
   <style />
   <datasources>
-    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.1e781eed951c476982e5' version='18.1'>
+    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.5daffceda22f4ce6a8c7' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.092da1485644494b939b'>
+          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.89e3a0bd373a48738c46'>
             <connection class='textscan' directory='c:/Users/milvus-Tom/.claude/Project/AI-Tableau/data' filename='sl_corporation_quality_claims.csv'
                         password='' server='' />
           </named-connection>
         </named-connections>
-        <relation connection='textscan.092da1485644494b939b' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
+        <relation connection='textscan.89e3a0bd373a48738c46' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
         <metadata-records>
         <metadata-record class='column'>
           <remote-name>claim_id</remote-name>
@@ -355,11 +355,29 @@
     <column caption='KPI Last1M Count' datatype='integer' name='[Calculation_KPILast1MCount]' role='measure' type='quantitative'>
       <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2025-12-01# AND [occurrence_date] &lt;= #2025-12-31# THEN 1 END' />
     </column>
+    <column caption='KPI Last1M Prev Amount' datatype='real' name='[Calculation_KPILast1MPrevAmount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-12-01# AND [occurrence_date] &lt;= #2024-12-31# THEN [claim_amount_usd] END' />
+    </column>
+    <column caption='KPI Last1M Prev Count' datatype='integer' name='[Calculation_KPILast1MPrevCount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-12-01# AND [occurrence_date] &lt;= #2024-12-31# THEN 1 END' />
+    </column>
+    <column caption='KPI Last1M Card' datatype='string' name='[Calculation_KPILast1MCard]' role='measure' type='nominal'>
+      <calculation class='tableau' formula='&quot;최근 1개월&quot; + CHAR(10) + &quot;2025.12 · 전년동기比&quot; + CHAR(10) + CHAR(10) + STR(SUM([Calculation_KPILast1MCount])) + &quot;건&quot; + CHAR(10) + IIF(SUM([Calculation_KPILast1MCount]) &gt;= SUM([Calculation_KPILast1MPrevCount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast1MCount]) - SUM([Calculation_KPILast1MPrevCount])) / SUM([Calculation_KPILast1MPrevCount]) * 100, 1)) + &quot;%&quot; + CHAR(10) + CHAR(10) + IIF(SUM([Calculation_KPILast1MAmount]) &gt;= 1000000, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast1MAmount])/1000000,2)) + &quot;M&quot;, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast1MAmount])/1000,1)) + &quot;K&quot;) + CHAR(10) + IIF(SUM([Calculation_KPILast1MAmount]) &gt;= SUM([Calculation_KPILast1MPrevAmount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast1MAmount]) - SUM([Calculation_KPILast1MPrevAmount])) / SUM([Calculation_KPILast1MPrevAmount]) * 100, 1)) + &quot;%&quot;' />
+    </column>
     <column caption='KPI Last3M Amount' datatype='real' name='[Calculation_KPILast3MAmount]' role='measure' type='quantitative'>
       <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2025-10-01# AND [occurrence_date] &lt;= #2025-12-31# THEN [claim_amount_usd] END' />
     </column>
     <column caption='KPI Last3M Count' datatype='integer' name='[Calculation_KPILast3MCount]' role='measure' type='quantitative'>
       <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2025-10-01# AND [occurrence_date] &lt;= #2025-12-31# THEN 1 END' />
+    </column>
+    <column caption='KPI Last3M Prev Amount' datatype='real' name='[Calculation_KPILast3MPrevAmount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-10-01# AND [occurrence_date] &lt;= #2024-12-31# THEN [claim_amount_usd] END' />
+    </column>
+    <column caption='KPI Last3M Prev Count' datatype='integer' name='[Calculation_KPILast3MPrevCount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-10-01# AND [occurrence_date] &lt;= #2024-12-31# THEN 1 END' />
+    </column>
+    <column caption='KPI Last3M Card' datatype='string' name='[Calculation_KPILast3MCard]' role='measure' type='nominal'>
+      <calculation class='tableau' formula='&quot;최근 3개월&quot; + CHAR(10) + &quot;2025.10~12 · 전년동기比&quot; + CHAR(10) + CHAR(10) + STR(SUM([Calculation_KPILast3MCount])) + &quot;건&quot; + CHAR(10) + IIF(SUM([Calculation_KPILast3MCount]) &gt;= SUM([Calculation_KPILast3MPrevCount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast3MCount]) - SUM([Calculation_KPILast3MPrevCount])) / SUM([Calculation_KPILast3MPrevCount]) * 100, 1)) + &quot;%&quot; + CHAR(10) + CHAR(10) + IIF(SUM([Calculation_KPILast3MAmount]) &gt;= 1000000, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast3MAmount])/1000000,2)) + &quot;M&quot;, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast3MAmount])/1000,1)) + &quot;K&quot;) + CHAR(10) + IIF(SUM([Calculation_KPILast3MAmount]) &gt;= SUM([Calculation_KPILast3MPrevAmount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast3MAmount]) - SUM([Calculation_KPILast3MPrevAmount])) / SUM([Calculation_KPILast3MPrevAmount]) * 100, 1)) + &quot;%&quot;' />
     </column>
     <column caption='KPI Last6M Amount' datatype='real' name='[Calculation_KPILast6MAmount]' role='measure' type='quantitative'>
       <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2025-07-01# AND [occurrence_date] &lt;= #2025-12-31# THEN [claim_amount_usd] END' />
@@ -367,11 +385,32 @@
     <column caption='KPI Last6M Count' datatype='integer' name='[Calculation_KPILast6MCount]' role='measure' type='quantitative'>
       <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2025-07-01# AND [occurrence_date] &lt;= #2025-12-31# THEN 1 END' />
     </column>
+    <column caption='KPI Last6M Prev Amount' datatype='real' name='[Calculation_KPILast6MPrevAmount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-07-01# AND [occurrence_date] &lt;= #2024-12-31# THEN [claim_amount_usd] END' />
+    </column>
+    <column caption='KPI Last6M Prev Count' datatype='integer' name='[Calculation_KPILast6MPrevCount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-07-01# AND [occurrence_date] &lt;= #2024-12-31# THEN 1 END' />
+    </column>
+    <column caption='KPI Last6M Card' datatype='string' name='[Calculation_KPILast6MCard]' role='measure' type='nominal'>
+      <calculation class='tableau' formula='&quot;최근 6개월&quot; + CHAR(10) + &quot;2025.07~12 · 전년동기比&quot; + CHAR(10) + CHAR(10) + STR(SUM([Calculation_KPILast6MCount])) + &quot;건&quot; + CHAR(10) + IIF(SUM([Calculation_KPILast6MCount]) &gt;= SUM([Calculation_KPILast6MPrevCount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast6MCount]) - SUM([Calculation_KPILast6MPrevCount])) / SUM([Calculation_KPILast6MPrevCount]) * 100, 1)) + &quot;%&quot; + CHAR(10) + CHAR(10) + IIF(SUM([Calculation_KPILast6MAmount]) &gt;= 1000000, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast6MAmount])/1000000,2)) + &quot;M&quot;, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast6MAmount])/1000,1)) + &quot;K&quot;) + CHAR(10) + IIF(SUM([Calculation_KPILast6MAmount]) &gt;= SUM([Calculation_KPILast6MPrevAmount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast6MAmount]) - SUM([Calculation_KPILast6MPrevAmount])) / SUM([Calculation_KPILast6MPrevAmount]) * 100, 1)) + &quot;%&quot;' />
+    </column>
     <column caption='KPI Last12M Amount' datatype='real' name='[Calculation_KPILast12MAmount]' role='measure' type='quantitative'>
       <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2025-01-01# AND [occurrence_date] &lt;= #2025-12-31# THEN [claim_amount_usd] END' />
     </column>
     <column caption='KPI Last12M Count' datatype='integer' name='[Calculation_KPILast12MCount]' role='measure' type='quantitative'>
       <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2025-01-01# AND [occurrence_date] &lt;= #2025-12-31# THEN 1 END' />
+    </column>
+    <column caption='KPI Last12M Prev Amount' datatype='real' name='[Calculation_KPILast12MPrevAmount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-01-01# AND [occurrence_date] &lt;= #2024-12-31# THEN [claim_amount_usd] END' />
+    </column>
+    <column caption='KPI Last12M Prev Count' datatype='integer' name='[Calculation_KPILast12MPrevCount]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='IF [occurrence_date] &gt;= #2024-01-01# AND [occurrence_date] &lt;= #2024-12-31# THEN 1 END' />
+    </column>
+    <column caption='KPI Last12M Card' datatype='string' name='[Calculation_KPILast12MCard]' role='measure' type='nominal'>
+      <calculation class='tableau' formula='&quot;최근 12개월&quot; + CHAR(10) + &quot;2025.01~12 · 전년동기比&quot; + CHAR(10) + CHAR(10) + STR(SUM([Calculation_KPILast12MCount])) + &quot;건&quot; + CHAR(10) + IIF(SUM([Calculation_KPILast12MCount]) &gt;= SUM([Calculation_KPILast12MPrevCount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast12MCount]) - SUM([Calculation_KPILast12MPrevCount])) / SUM([Calculation_KPILast12MPrevCount]) * 100, 1)) + &quot;%&quot; + CHAR(10) + CHAR(10) + IIF(SUM([Calculation_KPILast12MAmount]) &gt;= 1000000, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast12MAmount])/1000000,2)) + &quot;M&quot;, &quot;$&quot; + STR(ROUND(SUM([Calculation_KPILast12MAmount])/1000,1)) + &quot;K&quot;) + CHAR(10) + IIF(SUM([Calculation_KPILast12MAmount]) &gt;= SUM([Calculation_KPILast12MPrevAmount]), &quot;▲&quot;, &quot;▼&quot;) + &quot; &quot; + STR(ROUND(ABS(SUM([Calculation_KPILast12MAmount]) - SUM([Calculation_KPILast12MPrevAmount])) / SUM([Calculation_KPILast12MPrevAmount]) * 100, 1)) + &quot;%&quot;' />
+    </column>
+    <column caption='KPI All Card' datatype='string' name='[Calculation_KPIAllCard]' role='measure' type='nominal'>
+      <calculation class='tableau' formula='&quot;전체(3개년)&quot; + CHAR(10) + &quot;2023.01~2025.12&quot; + CHAR(10) + CHAR(10) + STR(COUNT([claim_id])) + &quot;건&quot; + CHAR(10) + CHAR(10) + IIF(SUM([claim_amount_usd]) &gt;= 1000000, &quot;$&quot; + STR(ROUND(SUM([claim_amount_usd])/1000000,2)) + &quot;M&quot;, &quot;$&quot; + STR(ROUND(SUM([claim_amount_usd])/1000,1)) + &quot;K&quot;)' />
     </column>
     </datasource>
   </datasources>
@@ -380,13 +419,11 @@
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
-            <column caption='KPI Last1M Count' datatype='integer' name='[Calculation_KPILast1MCount]' role='measure' type='quantitative' />
-            <column caption='KPI Last1M Amount' datatype='real' name='[Calculation_KPILast1MAmount]' role='measure' type='quantitative' />
-            <column-instance column='[Calculation_KPILast1MCount]' derivation='Sum' name='[sum:Calculation_KPILast1MCount:qk]' pivot='key' type='quantitative' />
-            <column-instance column='[Calculation_KPILast1MAmount]' derivation='Sum' name='[sum:Calculation_KPILast1MAmount:qk]' pivot='key' type='quantitative' />
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
+            <column caption='KPI Last1M Card' datatype='string' name='[Calculation_KPILast1MCard]' role='measure' type='nominal' />
+            <column-instance column='[Calculation_KPILast1MCard]' derivation='None' name='[none:Calculation_KPILast1MCard:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -398,25 +435,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.1e781eed951c476982e5].[sum:Calculation_KPILast1MAmount:qk]' />
+              <text column='[federated.5daffceda22f4ce6a8c7].[none:Calculation_KPILast1MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:Calculation_KPILast1MCount:qk]</cols>
+        <cols></cols>
       </table>
     </worksheet>
     <worksheet name='1_KPI_3M'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
-            <column caption='KPI Last3M Count' datatype='integer' name='[Calculation_KPILast3MCount]' role='measure' type='quantitative' />
-            <column caption='KPI Last3M Amount' datatype='real' name='[Calculation_KPILast3MAmount]' role='measure' type='quantitative' />
-            <column-instance column='[Calculation_KPILast3MCount]' derivation='Sum' name='[sum:Calculation_KPILast3MCount:qk]' pivot='key' type='quantitative' />
-            <column-instance column='[Calculation_KPILast3MAmount]' derivation='Sum' name='[sum:Calculation_KPILast3MAmount:qk]' pivot='key' type='quantitative' />
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
+            <column caption='KPI Last3M Card' datatype='string' name='[Calculation_KPILast3MCard]' role='measure' type='nominal' />
+            <column-instance column='[Calculation_KPILast3MCard]' derivation='None' name='[none:Calculation_KPILast3MCard:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -428,25 +463,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.1e781eed951c476982e5].[sum:Calculation_KPILast3MAmount:qk]' />
+              <text column='[federated.5daffceda22f4ce6a8c7].[none:Calculation_KPILast3MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:Calculation_KPILast3MCount:qk]</cols>
+        <cols></cols>
       </table>
     </worksheet>
     <worksheet name='1_KPI_6M'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
-            <column caption='KPI Last6M Count' datatype='integer' name='[Calculation_KPILast6MCount]' role='measure' type='quantitative' />
-            <column caption='KPI Last6M Amount' datatype='real' name='[Calculation_KPILast6MAmount]' role='measure' type='quantitative' />
-            <column-instance column='[Calculation_KPILast6MCount]' derivation='Sum' name='[sum:Calculation_KPILast6MCount:qk]' pivot='key' type='quantitative' />
-            <column-instance column='[Calculation_KPILast6MAmount]' derivation='Sum' name='[sum:Calculation_KPILast6MAmount:qk]' pivot='key' type='quantitative' />
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
+            <column caption='KPI Last6M Card' datatype='string' name='[Calculation_KPILast6MCard]' role='measure' type='nominal' />
+            <column-instance column='[Calculation_KPILast6MCard]' derivation='None' name='[none:Calculation_KPILast6MCard:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -458,25 +491,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.1e781eed951c476982e5].[sum:Calculation_KPILast6MAmount:qk]' />
+              <text column='[federated.5daffceda22f4ce6a8c7].[none:Calculation_KPILast6MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:Calculation_KPILast6MCount:qk]</cols>
+        <cols></cols>
       </table>
     </worksheet>
     <worksheet name='1_KPI_12M'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
-            <column caption='KPI Last12M Count' datatype='integer' name='[Calculation_KPILast12MCount]' role='measure' type='quantitative' />
-            <column caption='KPI Last12M Amount' datatype='real' name='[Calculation_KPILast12MAmount]' role='measure' type='quantitative' />
-            <column-instance column='[Calculation_KPILast12MCount]' derivation='Sum' name='[sum:Calculation_KPILast12MCount:qk]' pivot='key' type='quantitative' />
-            <column-instance column='[Calculation_KPILast12MAmount]' derivation='Sum' name='[sum:Calculation_KPILast12MAmount:qk]' pivot='key' type='quantitative' />
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
+            <column caption='KPI Last12M Card' datatype='string' name='[Calculation_KPILast12MCard]' role='measure' type='nominal' />
+            <column-instance column='[Calculation_KPILast12MCard]' derivation='None' name='[none:Calculation_KPILast12MCard:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -488,25 +519,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.1e781eed951c476982e5].[sum:Calculation_KPILast12MAmount:qk]' />
+              <text column='[federated.5daffceda22f4ce6a8c7].[none:Calculation_KPILast12MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:Calculation_KPILast12MCount:qk]</cols>
+        <cols></cols>
       </table>
     </worksheet>
     <worksheet name='1_KPI_All'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
-            <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
-            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
-            <column-instance column='[claim_id]' derivation='Count' name='[count:claim_id:qk]' pivot='key' type='quantitative' />
-            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
+            <column caption='KPI All Card' datatype='string' name='[Calculation_KPIAllCard]' role='measure' type='nominal' />
+            <column-instance column='[Calculation_KPIAllCard]' derivation='None' name='[none:Calculation_KPIAllCard:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
           <aggregation value='true' />
         </view>
@@ -518,21 +547,21 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]' />
+              <text column='[federated.5daffceda22f4ce6a8c7].[none:Calculation_KPIAllCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>[federated.1e781eed951c476982e5].[count:claim_id:qk]</cols>
+        <cols></cols>
       </table>
     </worksheet>
     <worksheet name='1_Trend'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
@@ -550,17 +579,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Map'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Latitude (generated)' datatype='real' name='[Latitude (generated)]' role='measure' type='quantitative' />
             <column caption='Longitude (generated)' datatype='real' name='[Longitude (generated)]' role='measure' type='quantitative' />
             <column caption='Claim Country' datatype='string' name='[claim_country]' role='dimension' type='nominal' />
@@ -580,22 +609,22 @@
             </view>
             <mark class='Circle' />
             <encodings>
-              <size column='[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]' />
-              <level column='[federated.1e781eed951c476982e5].[none:claim_country:nk]' />
+              <size column='[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]' />
+              <level column='[federated.5daffceda22f4ce6a8c7].[none:claim_country:nk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:Latitude (generated):qk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:Longitude (generated):qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:Latitude (generated):qk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:Longitude (generated):qk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Top5_Customer'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
@@ -614,17 +643,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:customer:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:customer:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Top5_Defect'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[defect_type_en]' derivation='None' name='[none:defect_type_en:nk]' pivot='key' type='nominal' />
@@ -643,17 +672,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:defect_type_en:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:defect_type_en:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Top5_Plant'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[production_plant]' derivation='None' name='[none:production_plant:nk]' pivot='key' type='nominal' />
@@ -672,17 +701,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:production_plant:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:production_plant:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_1'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -690,7 +719,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.1e781eed951c476982e5].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.5daffceda22f4ce6a8c7].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Lamp Systems&quot;' />
           </filter>
           <aggregation value='true' />
@@ -705,17 +734,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_2'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -723,7 +752,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.1e781eed951c476982e5].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.5daffceda22f4ce6a8c7].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Mirror Systems&quot;' />
           </filter>
           <aggregation value='true' />
@@ -738,17 +767,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_3'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -756,7 +785,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.1e781eed951c476982e5].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.5daffceda22f4ce6a8c7].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Chassis Systems&quot;' />
           </filter>
           <aggregation value='true' />
@@ -771,17 +800,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_4'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -789,7 +818,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.1e781eed951c476982e5].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.5daffceda22f4ce6a8c7].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Front End Module&quot;' />
           </filter>
           <aggregation value='true' />
@@ -804,17 +833,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_5'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -822,7 +851,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.1e781eed951c476982e5].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.5daffceda22f4ce6a8c7].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Electrification&quot;' />
           </filter>
           <aggregation value='true' />
@@ -837,17 +866,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_Heatmap'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
@@ -865,21 +894,21 @@
             </view>
             <mark class='Square' />
             <encodings>
-              <color column='[federated.1e781eed951c476982e5].[count:claim_id:qk]' />
+              <color column='[federated.5daffceda22f4ce6a8c7].[count:claim_id:qk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:production_plant:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[none:defect_type_en:nk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:production_plant:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[none:defect_type_en:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_Rank_Category'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
@@ -898,17 +927,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:part_category:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:part_category:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_Rank_DefectCount'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column-instance column='[defect_type_en]' derivation='None' name='[none:defect_type_en:nk]' pivot='key' type='nominal' />
@@ -927,17 +956,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:defect_type_en:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[count:claim_id:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:defect_type_en:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[count:claim_id:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_CustComposition'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
@@ -956,17 +985,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:customer:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:customer:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Status'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
@@ -985,17 +1014,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:claim_status:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[count:claim_id:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:claim_status:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[count:claim_id:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Cycle_Customer'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
             <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
@@ -1014,17 +1043,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:customer:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[avg:Calculation_TotalCycleTime:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:customer:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[avg:Calculation_TotalCycleTime:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Cycle_Plant'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
             <column-instance column='[production_plant]' derivation='None' name='[none:production_plant:nk]' pivot='key' type='nominal' />
@@ -1043,17 +1072,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:production_plant:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[avg:Calculation_TotalCycleTime:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:production_plant:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[avg:Calculation_TotalCycleTime:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Severity'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Severity' datatype='string' name='[severity]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[severity]' derivation='None' name='[none:severity:nk]' pivot='key' type='nominal' />
@@ -1069,21 +1098,21 @@
             </view>
             <mark class='Bar' />
             <encodings>
-              <color column='[federated.1e781eed951c476982e5].[none:severity:nk]' />
+              <color column='[federated.5daffceda22f4ce6a8c7].[none:severity:nk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:severity:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:severity:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_LeadTime_Receive'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Lead Time To Receive' datatype='integer' name='[Calculation_LeadTimeToReceive]' role='measure' type='quantitative' />
             <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
@@ -1102,17 +1131,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:claim_status:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[avg:Calculation_LeadTimeToReceive:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:claim_status:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[avg:Calculation_LeadTimeToReceive:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_LeadTime_Confirm'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.1e781eed951c476982e5' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.5daffceda22f4ce6a8c7' />
           </datasources>
-          <datasource-dependencies datasource='federated.1e781eed951c476982e5'>
+          <datasource-dependencies datasource='federated.5daffceda22f4ce6a8c7'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Lead Time To Confirm' datatype='integer' name='[Calculation_LeadTimeToConfirm]' role='measure' type='quantitative' />
             <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
@@ -1131,8 +1160,8 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.1e781eed951c476982e5].[none:claim_status:nk]</rows>
-        <cols>[federated.1e781eed951c476982e5].[avg:Calculation_LeadTimeToConfirm:qk]</cols>
+        <rows>[federated.5daffceda22f4ce6a8c7].[none:claim_status:nk]</rows>
+        <cols>[federated.5daffceda22f4ce6a8c7].[avg:Calculation_LeadTimeToConfirm:qk]</cols>
       </table>
     </worksheet>
   </worksheets>

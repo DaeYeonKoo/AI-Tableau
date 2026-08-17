@@ -79,23 +79,61 @@ CALC_FIELDS = [
 
 # 1페이지 KPI 카드 5개(최근1/3/6/12개월 + 전체)용 조건부 계산식. 실제 <filter> XML은 아직
 # 검증 안 된 영역이라(대시보드 요구사항.md 리스크) 우회 - IF로 기간 밖 값을 NULL 처리한 뒤
-# SUM하면 <filter> 없이도 기간별 KPI를 만들 수 있음. "전체" 카드는 원본 필드를 그대로 사용.
+# SUM하면 <filter> 없이도 기간별 KPI를 만들 수 있음.
+# 각 기간마다: 이번 기간 count/amount + 전년동기 count/amount(증감률용) + 카드 전체를
+# 하나의 여러 줄 문자열로 합친 "Card" 계산식(제목/부제/건수/증감률/금액/증감률)까지 생성.
 KPI_PERIODS = [
-    ("Last1M", "2025-12-01", "2025-12-31"),
-    ("Last3M", "2025-10-01", "2025-12-31"),
-    ("Last6M", "2025-07-01", "2025-12-31"),
-    ("Last12M", "2025-01-01", "2025-12-31"),
+    ("Last1M", "2025-12-01", "2025-12-31", "2024-12-01", "2024-12-31", "최근 1개월", "2025.12"),
+    ("Last3M", "2025-10-01", "2025-12-31", "2024-10-01", "2024-12-31", "최근 3개월", "2025.10~12"),
+    ("Last6M", "2025-07-01", "2025-12-31", "2024-07-01", "2024-12-31", "최근 6개월", "2025.07~12"),
+    ("Last12M", "2025-01-01", "2025-12-31", "2024-01-01", "2024-12-31", "최근 12개월", "2025.01~12"),
 ]
-for pname, start, end in KPI_PERIODS:
-    cond = f"[occurrence_date] >= #{start}# AND [occurrence_date] <= #{end}#"
-    CALC_FIELDS.append((
-        f"KPI{pname}Amount", f"KPI {pname} Amount", "real", "measure", "quantitative",
-        f"IF {cond} THEN [claim_amount_usd] END",
-    ))
-    CALC_FIELDS.append((
-        f"KPI{pname}Count", f"KPI {pname} Count", "integer", "measure", "quantitative",
-        f"IF {cond} THEN 1 END",
-    ))
+
+
+def cond_calc(start, end):
+    return f"[occurrence_date] >= #{start}# AND [occurrence_date] <= #{end}#"
+
+
+def usd_fmt_expr(sum_expr):
+    """$238.3K / $1.00M 처럼 크기에 따라 K·M 단위를 자동으로 바꾸는 Tableau 수식 조각."""
+    return (f'IIF({sum_expr} >= 1000000, "$" + STR(ROUND({sum_expr}/1000000,2)) + "M", '
+            f'"$" + STR(ROUND({sum_expr}/1000,1)) + "K")')
+
+
+def pct_badge_expr(cur_expr, prev_expr):
+    """▲ 12.3% / ▼ 4.5% 형태의 전기간 대비 증감률 배지 수식 조각."""
+    pct = f'ROUND(ABS({cur_expr} - {prev_expr}) / {prev_expr} * 100, 1)'
+    arrow = f'IIF({cur_expr} >= {prev_expr}, "▲", "▼")'
+    return f'{arrow} + " " + STR({pct}) + "%"'
+
+
+for pname, start, end, pstart, pend, label, sublabel in KPI_PERIODS:
+    CALC_FIELDS.append((f"KPI{pname}Amount", f"KPI {pname} Amount", "real", "measure", "quantitative",
+                         f"IF {cond_calc(start, end)} THEN [claim_amount_usd] END"))
+    CALC_FIELDS.append((f"KPI{pname}Count", f"KPI {pname} Count", "integer", "measure", "quantitative",
+                         f"IF {cond_calc(start, end)} THEN 1 END"))
+    CALC_FIELDS.append((f"KPI{pname}PrevAmount", f"KPI {pname} Prev Amount", "real", "measure", "quantitative",
+                         f"IF {cond_calc(pstart, pend)} THEN [claim_amount_usd] END"))
+    CALC_FIELDS.append((f"KPI{pname}PrevCount", f"KPI {pname} Prev Count", "integer", "measure", "quantitative",
+                         f"IF {cond_calc(pstart, pend)} THEN 1 END"))
+
+    cnt = f"SUM([Calculation_KPI{pname}Count])"
+    pcnt = f"SUM([Calculation_KPI{pname}PrevCount])"
+    amt = f"SUM([Calculation_KPI{pname}Amount])"
+    pamt = f"SUM([Calculation_KPI{pname}PrevAmount])"
+    card_formula = (
+        f'"{label}" + CHAR(10) + "{sublabel} · 전년동기比" + CHAR(10) + CHAR(10) + '
+        f'STR({cnt}) + "건" + CHAR(10) + {pct_badge_expr(cnt, pcnt)} + CHAR(10) + CHAR(10) + '
+        f'{usd_fmt_expr(amt)} + CHAR(10) + {pct_badge_expr(amt, pamt)}'
+    )
+    CALC_FIELDS.append((f"KPI{pname}Card", f"KPI {pname} Card", "string", "measure", "nominal", card_formula))
+
+_all_amt = "SUM([claim_amount_usd])"
+_all_card_formula = (
+    '"전체(3개년)" + CHAR(10) + "2023.01~2025.12" + CHAR(10) + CHAR(10) + '
+    'STR(COUNT([claim_id])) + "건" + CHAR(10) + CHAR(10) + ' + usd_fmt_expr(_all_amt)
+)
+CALC_FIELDS.append(("KPIAllCard", "KPI All Card", "string", "measure", "nominal", _all_card_formula))
 
 # 필드 레지스트리: name -> (datatype, role, type)  (raw + calc 통합)
 FIELD_TYPES = {name: (dtype, role, ftype) for name, dtype, role, ftype in COLUMNS}
@@ -372,13 +410,12 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
     </worksheet>"""
 
 
-def ws_kpi_text(name, count_field="claim_id", amount_field="claim_amount_usd"):
-    """기간별 KPI 카드: 건수(Count/Sum) + 금액(Sum) 텍스트. count_field/amount_field로
-    기간 조건부 계산식(KPI_Last1M_Count 등)을 넘기면 <filter> 없이 기간별 카드를 만들 수 있음."""
-    count_agg = "Sum" if count_field != "claim_id" else "Count"
-    cci = col_instance(count_field, count_agg)
-    mci = col_instance(amount_field, "Sum")
-    deps = datasource_dependencies([cci, mci], sheet_name=name)
+def ws_kpi_text(name, card_field):
+    """기간별 KPI 카드: 제목/부제/건수/증감률/금액/증감률을 전부 담은 여러 줄 문자열
+    계산식(card_field, 예: KPILast1MCard) 하나를 Text 마크 라벨로 표시. 행/열 모두 비워서
+    "큰 텍스트 블록" 형태로 렌더링(축 없음)."""
+    fci = col_instance(card_field, "None")
+    deps = datasource_dependencies([fci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -398,12 +435,12 @@ def ws_kpi_text(name, count_field="claim_id", amount_field="claim_amount_usd"):
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='{mci['qualified']}' />
+              <text column='{fci['qualified']}' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>{cci['qualified']}</cols>
+        <cols></cols>
       </table>
     </worksheet>"""
 
@@ -460,11 +497,11 @@ def add(name, xml):
 
 
 # Page 1
-add("1_KPI_1M", ws_kpi_text("1_KPI_1M", "KPILast1MCount", "KPILast1MAmount"))
-add("1_KPI_3M", ws_kpi_text("1_KPI_3M", "KPILast3MCount", "KPILast3MAmount"))
-add("1_KPI_6M", ws_kpi_text("1_KPI_6M", "KPILast6MCount", "KPILast6MAmount"))
-add("1_KPI_12M", ws_kpi_text("1_KPI_12M", "KPILast12MCount", "KPILast12MAmount"))
-add("1_KPI_All", ws_kpi_text("1_KPI_All"))
+add("1_KPI_1M", ws_kpi_text("1_KPI_1M", "KPILast1MCard"))
+add("1_KPI_3M", ws_kpi_text("1_KPI_3M", "KPILast3MCard"))
+add("1_KPI_6M", ws_kpi_text("1_KPI_6M", "KPILast6MCard"))
+add("1_KPI_12M", ws_kpi_text("1_KPI_12M", "KPILast12MCard"))
+add("1_KPI_All", ws_kpi_text("1_KPI_All", "KPIAllCard"))
 add("1_Trend", ws_trend("1_Trend", "OccurrenceMonth", "claim_amount_usd", "Sum"))
 add("1_Map", ws_map("1_Map"))
 add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd"))
