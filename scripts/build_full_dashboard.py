@@ -60,9 +60,15 @@ REMOTE_TYPE = {"string": "129", "date": "133", "integer": "20", "real": "5"}
 
 # ------------------------------------------------------------------
 # 1-1) 매개변수 (상단 필터 박스의 시작일/종료일) - 별도의 'Parameters' 데이터소스로 존재하는
-# 것이 실제 Tableau .twb의 표준 구조. hasconnection='false', column마다 param-domain-type +
-# 현재값(value 속성) + 기본값 calculation을 가짐. 워크북 전역에서 데이터소스 접두사 없이
-# [Parameter 1] 형태로 계산식에서 바로 참조 가능.
+# 것이 실제 Tableau .twb의 표준 구조. Tableau 공식 샘플 워크북(tableau/TabMon,
+# TabMon.twb)에서 실물 확인: hasconnection='false' inline='true' version='<workbook버전>'
+# 속성이 전부 있어야 하고(inline='true' 누락이 "매개변수 자체가 생성 안 됨" 버그의 원인이었음),
+# 다른 데이터소스의 계산식에서 매개변수를 쓰려면 반드시 [Parameters].[Parameter 1]처럼
+# 데이터소스 접두사를 붙여야 하며(같은 샘플의 실제 계산식으로 확인:
+# "[Parameters].[Parameter 2] = ..."), 그 계산식을 쓰는 워크시트의 <view>는
+#   1) <datasources>에 <datasource name='Parameters' /> 항목을 추가로 넣고
+#   2) <datasource-dependencies datasource='Parameters'>에 쓰는 매개변수 column을
+#      (Parameters 데이터소스 자체와 동일한 전체 정의로) 별도 선언해야 함.
 # ------------------------------------------------------------------
 PARAM_DEFS = [
     ("Parameter 1", "Start Date", "date", "#2023-01-01#"),
@@ -77,10 +83,29 @@ def build_parameters_datasource():
         <calculation class='tableau' formula='{default}' />
       </column>""")
     cols_xml = "\n".join(cols)
-    return f"""    <datasource caption='Parameters' hasconnection='false' name='Parameters'>
+    return f"""    <datasource caption='Parameters' hasconnection='false' inline='true' name='Parameters' version='18.1'>
       <aliases enabled='yes' />
 {cols_xml}
     </datasource>"""
+
+
+def build_parameters_dependency_block():
+    """매개변수를 쓰는 계산식이 있는 워크시트라면 어디든 그대로 삽입할 datasource-dependencies
+    블록. 위 build_parameters_datasource()와 동일한 column 정의를 그대로 반복해야 함
+    (TabMon.twb 실물 예시에서 확인된 패턴 - column-instance는 필요 없음, column 선언만)."""
+    cols = []
+    for name, caption, dtype, default in PARAM_DEFS:
+        cols.append(f"""            <column caption='{caption}' datatype='{dtype}' name='[{name}]' param-domain-type='any' role='measure' type='quantitative' value='{default}'>
+              <calculation class='tableau' formula='{default}' />
+            </column>""")
+    cols_xml = "\n".join(cols)
+    return f"""          <datasource-dependencies datasource='Parameters'>
+{cols_xml}
+          </datasource-dependencies>"""
+
+
+PARAMETERS_DS_REF = "            <datasource name='Parameters' />"
+PARAMETERS_DEP_BLOCK = build_parameters_dependency_block()
 
 
 # ------------------------------------------------------------------
@@ -104,7 +129,7 @@ CALC_FIELDS = [
     # 불리언 계산식. <filter class='categorical'> + groupfilter function='member' member='true'
     # 패턴은 2_SM_* 워크시트에서 이미 검증된(실물 로드 성공) 구조라 이 필터도 그대로 재사용.
     ("DateRangeFilter", "Date Range Filter", "boolean", "dimension", "nominal",
-     "[occurrence_date] >= [Parameter 1] AND [occurrence_date] <= [Parameter 2]"),
+     "[occurrence_date] >= [Parameters].[Parameter 1] AND [occurrence_date] <= [Parameters].[Parameter 2]"),
 ]
 
 # 1페이지 KPI 카드 5개(최근1/3/6/12개월 + 전체)용 조건부 계산식. 실제 <filter> XML은 아직
@@ -356,10 +381,12 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar"):
         <view>
           <datasources>
             <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+{PARAMETERS_DS_REF}
           </datasources>
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
+{PARAMETERS_DEP_BLOCK}
 {filters_xml}
 {slices_xml}
           <aggregation value='true' />
@@ -392,10 +419,12 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
         <view>
           <datasources>
             <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+{PARAMETERS_DS_REF}
           </datasources>
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
+{PARAMETERS_DEP_BLOCK}
 {filters_xml}
 {slices_xml}
           <aggregation value='true' />
@@ -428,10 +457,12 @@ def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line"):
         <view>
           <datasources>
             <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+{PARAMETERS_DS_REF}
           </datasources>
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
+{PARAMETERS_DEP_BLOCK}
 {filters_xml}
 {slices_xml}
           <aggregation value='true' />
@@ -466,10 +497,12 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
         <view>
           <datasources>
             <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+{PARAMETERS_DS_REF}
           </datasources>
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
+{PARAMETERS_DEP_BLOCK}
           <filter class='categorical' column='{fci['qualified']}'>
             <groupfilter function='member' level='{fci['inst_name']}' member='&quot;{part_category_literal}&quot;' />
           </filter>
@@ -505,10 +538,12 @@ def ws_kpi_text(name, card_field):
         <view>
           <datasources>
             <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+{PARAMETERS_DS_REF}
           </datasources>
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
+{PARAMETERS_DEP_BLOCK}
 {filters_xml}
 {slices_xml}
           <aggregation value='true' />
@@ -544,10 +579,12 @@ def ws_map(name):
         <view>
           <datasources>
             <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+{PARAMETERS_DS_REF}
           </datasources>
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
+{PARAMETERS_DEP_BLOCK}
 {filters_xml}
 {slices_xml}
           <aggregation value='true' />
