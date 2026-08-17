@@ -517,32 +517,32 @@ def build_zone_tree(sheet_names, id_gen, with_style=True):
 
 
 def build_dashboard(dash_name, sheet_names):
-    # 실물 확인 사항('대시보드 2', 사용자가 Tableau UI로 직접 만들어 저장한 파일 - 정상 동작 확인됨):
-    #   - <datasources>/<datasource-dependencies>는 대시보드에 아예 없음 (이전 가설이 틀렸음)
-    #   - 워크시트를 담는 zone엔 type-v2가 없음 (이전에 넣었던 'visual'이 틀렸음)
+    # 실물 확인('대시보드 2', 사용자가 Tableau UI로 만들어 저장 - 정상 동작) + 로드 시점 실제
+    # 오류(D2E8DA72, 이번 회차)를 합쳐서 최종 확정:
+    #   - <datasources>/<datasource-dependencies>는 대시보드에 아예 없음
+    #   - 워크시트를 담는 zone엔 type-v2가 없음
     #   - <size>는 sizing-mode 없이 명시적 min/max로 지정
     #   - zone마다 <zone-style> 서식 블록 포함
     #   - <devicelayouts>에 Phone 레이아웃이 실제 내용(자체 size+zones)으로 채워져 있음
-    #   - <simple-id>는 devicelayouts 뒤에 실제로 존재함 (이전 "금지"라는 판단이 틀렸음)
-    #   - <dashboard enable-sort-zone-taborder='true' ...> 속성 포함
+    #   - simple-id / enable-sort-zone-taborder / devicelayout의 auto-generated는
+    #     Tableau가 "저장할 때" 쓰는 표기일 뿐, 사람이 "새로 작성해서 로드"할 때는
+    #     허용되지 않음(로더가 쓰는 검증 스키마가 저장 포맷보다 엄격함) - 전부 제외.
     desktop_zones = build_zone_tree(sheet_names, next_zone_id, with_style=True)
     phone_zones = build_zone_tree(sheet_names, next_zone_id, with_style=False)
-    dash_uuid = str(uuid.uuid4()).upper()
-    return f"""    <dashboard enable-sort-zone-taborder='true' name='{dash_name}'>
+    return f"""    <dashboard name='{dash_name}'>
       <style />
       <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' />
       <zones>
 {desktop_zones}
       </zones>
       <devicelayouts>
-        <devicelayout auto-generated='true' name='Phone'>
+        <devicelayout name='Phone'>
           <size maxheight='2200' minheight='2200' sizing-mode='vscroll' />
           <zones>
 {phone_zones}
           </zones>
         </devicelayout>
       </devicelayouts>
-      <simple-id uuid='{{{dash_uuid}}}' />
     </dashboard>"""
 
 
