@@ -482,18 +482,20 @@ def build_dashboard(dash_name, sheet_names):
         zid = next_zone_id()
         y = i * h_each
         zones_inner.append(
-            f"      <zone h='{h_each}' id='{zid}' name='{sn}' w='100000' x='0' y='{y}' />"
+            f"      <zone h='{h_each}' id='{zid}' name='{sn}' type-v2='visual' w='100000' x='0' y='{y}' />"
         )
     outer_id = next_zone_id()
     zones_xml = "\n".join(zones_inner)
+    dash_uuid = str(uuid.uuid4()).upper()
     return f"""    <dashboard name='{dash_name}'>
       <style />
-      <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' sizing-mode='fixed' />
+      <size sizing-mode='automatic' />
       <zones>
         <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
 {zones_xml}
         </zone>
       </zones>
+      <simple-id uuid='{{{dash_uuid}}}' />
     </dashboard>"""
 
 
