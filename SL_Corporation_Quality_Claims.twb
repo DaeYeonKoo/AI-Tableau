@@ -2,17 +2,19 @@
 
 <workbook original-version='18.1' source-build='2025.3.0' source-platform='win' version='18.1'
           xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-format-change-manifest />
   <preferences />
+  <style />
   <datasources>
-    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.bcb41e5cdb1a436c933b' version='18.1'>
+    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.3c49b66cc0494c578926' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.17e9ff13073448a1bb5a'>
+          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.d1dc87ea94c54b8b824e'>
             <connection class='textscan' directory='c:/Users/milvus-Tom/.claude/Project/AI-Tableau/data' filename='sl_corporation_quality_claims.csv'
                         password='' server='' />
           </named-connection>
         </named-connections>
-        <relation connection='textscan.17e9ff13073448a1bb5a' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
+        <relation connection='textscan.d1dc87ea94c54b8b824e' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
         <metadata-records>
         <metadata-record class='column'>
           <remote-name>claim_id</remote-name>
@@ -336,9 +338,9 @@
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bcb41e5cdb1a436c933b' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.3c49b66cc0494c578926' />
           </datasources>
-          <datasource-dependencies datasource='federated.bcb41e5cdb1a436c933b'>
+          <datasource-dependencies datasource='federated.3c49b66cc0494c578926'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
           </datasource-dependencies>
@@ -352,14 +354,13 @@
             </view>
             <mark class='Automatic' />
             <encodings>
-              <text column='[federated.bcb41e5cdb1a436c933b].[sum:claim_amount_usd:qk]' />
+              <text column='[federated.3c49b66cc0494c578926].[sum:claim_amount_usd:qk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bcb41e5cdb1a436c933b].[none:customer:nk]</rows>
-        <cols>[federated.bcb41e5cdb1a436c933b].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.3c49b66cc0494c578926].[none:customer:nk]</rows>
+        <cols>[federated.3c49b66cc0494c578926].[sum:claim_amount_usd:qk]</cols>
       </table>
-      <simple-id uuid='{078B0EBA-11D5-44EC-ACEA-79A191CF1509}' />
     </worksheet>
   </worksheets>
   <windows>
@@ -385,7 +386,4 @@
       </cards>
     </window>
   </windows>
-  <explain-data enabled-for-viewer='true' extreme-values-enabled-for-all='false'>
-    <explanation-types />
-  </explain-data>
 </workbook>

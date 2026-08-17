@@ -148,7 +148,9 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
 
 <workbook original-version='18.1' source-build='2025.3.0' source-platform='win' version='18.1'
           xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-format-change-manifest />
   <preferences />
+  <style />
   <datasources>
     <datasource caption='sl_corporation_quality_claims' inline='true' name='{DS_NAME}' version='18.1'>
       <connection class='federated'>
@@ -195,7 +197,6 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
         <rows>[{DS_NAME}].[none:customer:nk]</rows>
         <cols>[{DS_NAME}].[sum:claim_amount_usd:qk]</cols>
       </table>
-      <simple-id uuid='{{{str(uuid.uuid4()).upper()}}}' />
     </worksheet>
   </worksheets>
   <windows>
@@ -221,9 +222,6 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
       </cards>
     </window>
   </windows>
-  <explain-data enabled-for-viewer='true' extreme-values-enabled-for-all='false'>
-    <explanation-types />
-  </explain-data>
 </workbook>
 """
 

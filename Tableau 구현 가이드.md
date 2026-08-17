@@ -112,14 +112,54 @@ Tableau Cloud 2026년 6월 / Server 2026.2부터 REST API로 서버 측 구문+�
 
 `<workbook>` 자체의 속성 (`Workbook-WorkbookAttributes-AG`, 🔷):
 ```xml
-<workbook original-version='25.3' source-build='0.0.0 (0000.0.0.0)' source-platform='win'
-          version='25.3' xmlns:user='http://www.tableausoftware.com/xml/user'>
+<workbook original-version='18.1' source-build='2025.3.0' source-platform='win'
+          version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
 ```
+
+### 1-1. ✅ 실제 Tableau 2025.3 오류로 확인된 사실 (최고 신뢰도 — 2026.2 XSD보다 우선)
+
+`SL_Corporation_Quality_Claims.twb` 1차 시도를 사용자가 실제 Tableau 2025.3에서 열어봤고,
+"동작을 완료할 수 없습니다" 오류(코드 D2E8DA72)가 발생했습니다. **이 오류 메시지 자체가
+Tableau 2025.3의 진짜 파서가 뱉어낸 정확한 content model이라 XSD보다 신뢰도가 높습니다**:
+
+```
+Error: element 'explain-data' is not allowed for content model
+'(document-format-change-manifest,repository-location?,preferences,style-theme?,style,
+local-data?,datasources?,datasource-relationships?,mapsources?,shared-views?,actions?,
+worksheets?,dashboards?,windows,thumbnails?,external?)'
+
+Error: element 'simple-id' is not allowed for content model
+'(((layout-options?)|(repository-location?)),table)'
+```
+
+이걸로 확인/수정된 것:
+- ✅ **`version='18.1'`은 2025.3에서 받아들여짐** (버전 불일치 오류가 아니라 그 다음 단계인
+  content-model 오류가 났다는 것 자체가 버전 태그는 통과했다는 뜻). §0-1에서 "25.3일 것"이라고
+  추정했던 게 **틀렸음** — 2025.3도 여전히 예전 `18.1` 스키마 계열을 씀.
+- ✅ **`<workbook>` 최상위는 `document-format-change-manifest`가 필수**(⚠️였던 것과 달리
+  `?` 없음), 그 다음 `preferences`, 그 다음 **`style`이 필수**로 있어야 함 (2026.2 XSD엔
+  `Workbook-Styles-G`가 있었지만 실제로 최상위에 `<style/>` 엘리먼트가 바로 필요).
+- ❌ **`<explain-data>`는 2025.3에 아예 존재하지 않는 엘리먼트** — 2026.x에서 새로 추가된
+  기능으로 확인됨. **2025.3 파일에는 절대 넣으면 안 됨.**
+- ❌ **`<simple-id>`도 2025.3의 워크시트에는 존재하지 않음** — `<worksheet>`의 content model이
+  정확히 `((layout-options?)|(repository-location?)), table` 뿐. `table` 뒤에 아무것도 못 옴.
+  (`simple-id`는 대시보드 쪽 `SimpleIdentifierForThisDashboard-G`에서만 쓰이는 것으로 추정 —
+  워크시트에는 애초에 해당 없음. §0-1에서 언급했듯 **2026.2 스키마가 2025.3보다 기능이
+  많아서 생긴 오탐**의 실제 사례.)
+- 🟢 **반대로 오류가 안 난 부분** = 통과했다는 뜻으로 잠정 신뢰 가능: CSV `<connection>`
+  구조, 24개 `<column>` 정의, 워크시트의 `<table><view>...<panes>...<rows>/<cols>` 구조 —
+  전부 이 1차 오류 목록에 등장하지 않음. (다만 XML 구문 통과 ≠ 데이터가 실제로 로드된다는
+  뜻은 아직 아님 — 수정 후 다시 열어봐야 최종 확인됨.)
+
+수정된 최상위 순서 (`scripts/build_twb.py`에 반영 완료): `document-format-change-manifest` →
+`preferences` → `style` → `datasources` → `worksheets` → `windows` (둘 다 빈 자기닫힘 태그
+`<document-format-change-manifest />`, `<style />`로 일단 시도 — 내용이 필요한지는 다음
+테스트에서 확인).
 
 핵심 포인트:
 - README 공식 예시(2026.1 기준): `<workbook original-version='26.1' ... version='26.1'>` —
-  즉 **`original-version`과 `version` 두 속성 모두 필요**하며, XSD 파일명(`twb_2026.1.0.xsd`)과
-  버전 문자열(`26.1`)이 대응. 2025.3은 `25.3`일 가능성이 높지만 ⚠️ 미검증(공식 스키마 커버리지 밖).
+  2026.x부터는 내부 스키마 버전과 제품 버전이 일치하도록 바뀐 것으로 보임. **2025.3은 여전히
+  구 체계인 `18.1`을 씀** (✅ §1-1에서 실제 확인 — "25.3일 것"이라던 추측은 틀렸음).
 - `<document-format-change-manifest>` 안에 예전에는 사용된 기능을 일일이 나열해야 했는데,
   **README가 권장하는 단순화된 방법**은 `<ManifestByVersion />` 하나만 넣는 것 — 🔷 공식문서 예시:
   ```xml
@@ -371,7 +411,11 @@ CSV/텍스트 파일 연결은 Tableau 내부에서 `federated` 데이터소스�
   "버블 크기=금액" 같은 인코딩이 여기 대응됨
 - `rows`/`cols`: 필드가 `[none:필드명:nk]`(차원, nominal key) 또는
   `[sum:필드명:qk]`(집계된 측정값, quantitative key) 같은 접미사로 표기되는 패턴 ⚠️ 정확한
-  접미사 규칙은 실제 파일로 확인 필요
+  접미사 규칙은 실제 파일로 확인 필요 (1차 실물 테스트에서 이 부분은 오류가 안 났음 — §1-1의
+  "🟢 통과 추정" 항목. 최종 확정은 아니지만 방향은 맞는 듯)
+- ✅ **`<worksheet>`의 실제 content model**(2025.3, §1-1 실물 오류로 확인):
+  `((layout-options?)|(repository-location?)), table` — 즉 `<table>` 뒤에는 **아무 형제
+  엘리먼트도 올 수 없음** (`<simple-id>` 같은 걸 붙이면 바로 오류)
 
 ---
 
@@ -548,24 +592,28 @@ CSV/텍스트 파일 연결은 Tableau 내부에서 `federated` 데이터소스�
 
 ## 12. TODO — 시드 파일 확보 시 갱신할 항목
 
-**공식 스키마로 이미 해결됨** (더 이상 시드 파일 없이도 진행 가능):
-- [x] §1 workbook 최상위 시퀀스 구조
+**공식 스키마로 이미 해결됨**:
 - [x] §3 컬럼 속성 전체 목록 및 datatype/role/type enum
 - [x] §4 calculation class enum, formula가 검증 대상이 아니라는 사실
 - [x] §5 매개변수 hasconnection/param-domain-type/members/range 구조
 - [x] §8 zone 속성 목록, type-v2 enum 20종
 
-**스키마로도 해결 안 됨 — 반드시 실제 파일(시드) 필요**:
-- [ ] §1 2025.3의 정확한 `version`/`original-version`/`source-build` 값
-- [ ] §2 CSV 연결의 정확한 XML — **스키마가 의도적으로 미검증하는 영역**이라 확정
-- [ ] §2 날짜 컬럼 자동 인식 여부, `claim_confirmed_date` 빈값→Null 처리 확인
-- [ ] §4 계산식 XML의 `name`(`Calculation_...`) ID 생성 규칙 (스키마상 자유 문자열이라
-      우리가 임의로 지어도 되지만, Tableau UI가 만드는 실제 관례를 보고 싶으면 시드 필요)
-- [ ] §6 `rows`/`cols` 필드 접미사 표기 규칙 (`:nk`, `:qk` 등) — 아직 미조사 영역
-- [ ] §8 `is-pixels` 기본값(true/false) 및 2025.3에서 실제 좌표 스케일 — **가장 중요**
-- [ ] §9 필터/하이라이트 액션의 정확한 `command` 문자열 — **스키마가 의도적으로 미검증**
-- [ ] §9 매개변수 액션(`edit-parameter-action`) vs 전통적 필터 액션, 어느 쪽이 우리
-      요구사항에 더 적합한지
+**1차 실물 테스트(2025.3 실제 오류)로 확정됨** (§1-1, 2026.2 XSD보다 우선):
+- [x] §1 `version='18.1'`이 2025.3에서 허용됨 확인
+- [x] §1 workbook 최상위 필수 순서: `document-format-change-manifest`(필수) →
+      `preferences` → `style`(필수) → `datasources` → `worksheets` → `windows`
+- [x] §1 `<explain-data>`는 2025.3에 없는 엘리먼트 — 절대 넣지 말 것
+- [x] §6 `<worksheet>`엔 `<table>` 뒤에 아무 것도 못 옴 (`simple-id` 같은 것 금지)
+- [x] §2/§6 CSV 연결·컬럼·워크시트 rows/cols 구조는 1차 오류 목록에 없었음 (잠정 통과)
+
+**아직 미해결 — 다음 테스트에서 확인 필요**:
+- [ ] `<document-format-change-manifest/>`, `<style/>`를 빈 태그로 둬도 되는지, 아니면
+      내부에 뭔가 있어야 하는지 (2차 테스트에서 확인 예정)
+- [ ] 데이터가 실제로 로드되는지 (XML 구문 통과 ≠ CSV 연결 성공) — §2 여전히 리스크
+- [ ] 워크시트에 막대그래프가 실제로 그려지는지 (rows/cols 접미사 규칙이 맞았는지)
+- [ ] §8 `is-pixels` 기본값 및 2025.3 실제 좌표 스케일 — 대시보드 만들 때 확인
+- [ ] §9 필터/하이라이트 액션의 정확한 `command` 문자열 — 액션 만들 때 확인
+- [ ] §9 매개변수 액션(`edit-parameter-action`) vs 전통적 필터 액션 중 적합한 것
 
 ---
 
