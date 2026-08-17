@@ -6,15 +6,15 @@
   <preferences />
   <style />
   <datasources>
-    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.abd28b54d89a46bda494' version='18.1'>
+    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.297a4e8c9a6d4e28a69f' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.111e171ad8bd4cfdb879'>
+          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.fa1ac9bcd7f64c038780'>
             <connection class='textscan' directory='c:/Users/milvus-Tom/.claude/Project/AI-Tableau/data' filename='sl_corporation_quality_claims.csv'
                         password='' server='' />
           </named-connection>
         </named-connections>
-        <relation connection='textscan.111e171ad8bd4cfdb879' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
+        <relation connection='textscan.fa1ac9bcd7f64c038780' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
         <metadata-records>
         <metadata-record class='column'>
           <remote-name>claim_id</remote-name>
@@ -331,15 +331,39 @@
     <column caption='Claim Quantity' datatype='integer' name='[claim_quantity]' role='measure' type='quantitative' />
     <column caption='Unit Price Usd' datatype='real' name='[unit_price_usd]' role='measure' type='quantitative' />
     <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+    <column caption='Lead Time To Receive' datatype='integer' name='[Calculation_LeadTimeToReceive]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='DATEDIFF(&apos;day&apos;, [occurrence_date], [claim_received_date])' />
+    </column>
+    <column caption='Lead Time To Confirm' datatype='integer' name='[Calculation_LeadTimeToConfirm]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='DATEDIFF(&apos;day&apos;, [claim_received_date], [claim_confirmed_date])' />
+    </column>
+    <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative'>
+      <calculation class='tableau' formula='DATEDIFF(&apos;day&apos;, [occurrence_date], [claim_confirmed_date])' />
+    </column>
+    <column caption='Is Open' datatype='boolean' name='[Calculation_IsOpen]' role='dimension' type='nominal'>
+      <calculation class='tableau' formula='[claim_status] = &quot;접수&quot; OR [claim_status] = &quot;조사중&quot;' />
+    </column>
+    <column caption='Is Confirmed Liable' datatype='boolean' name='[Calculation_IsConfirmedLiable]' role='dimension' type='nominal'>
+      <calculation class='tableau' formula='[claim_status] = &quot;확정&quot; OR [claim_status] = &quot;보상완료&quot;' />
+    </column>
+    <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal'>
+      <calculation class='tableau' formula='DATETRUNC(&apos;month&apos;, [occurrence_date])' />
+    </column>
     </datasource>
   </datasources>
   <worksheets>
-    <worksheet name='Sheet 1'>
+    <worksheet name='1_KPI'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.abd28b54d89a46bda494' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
           </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[claim_id]' derivation='Count' name='[count:claim_id:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
           <aggregation value='true' />
         </view>
         <style />
@@ -348,16 +372,1158 @@
             <view>
               <breakdown value='auto' />
             </view>
-            <mark class='Automatic' />
+            <mark class='Text' />
+            <encodings>
+              <text column='[sum:claim_amount_usd:qk]' />
+            </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols></cols>
+        <cols>[count:claim_id:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='1_Trend'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings />
+          </pane>
+        </panes>
+        <rows>[sum:claim_amount_usd:qk]</rows>
+        <cols>[none:Calculation_OccurrenceMonth:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='1_Map'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Latitude (generated)' datatype='real' name='[Latitude (generated)]' role='measure' type='quantitative' />
+            <column caption='Longitude (generated)' datatype='real' name='[Longitude (generated)]' role='measure' type='quantitative' />
+            <column caption='Claim Country' datatype='string' name='[claim_country]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[Latitude (generated)]' derivation='None' name='[none:Latitude (generated):qk]' pivot='key' type='quantitative' />
+            <column-instance column='[Longitude (generated)]' derivation='None' name='[none:Longitude (generated):qk]' pivot='key' type='quantitative' />
+            <column-instance column='[claim_country]' derivation='None' name='[none:claim_country:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Circle' />
+            <encodings>
+              <size column='[sum:claim_amount_usd:qk]' />
+              <level column='[none:claim_country:nk]' />
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:Latitude (generated):qk]</rows>
+        <cols>[none:Longitude (generated):qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='1_Top5_Customer'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:customer:nk]</rows>
+        <cols>[sum:claim_amount_usd:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='1_Top5_Defect'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[defect_type_en]' derivation='None' name='[none:defect_type_en:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:defect_type_en:nk]</rows>
+        <cols>[sum:claim_amount_usd:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='1_Top5_Plant'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[production_plant]' derivation='None' name='[none:production_plant:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:production_plant:nk]</rows>
+        <cols>[sum:claim_amount_usd:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_SM_1'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
+            <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[none:part_category:nk]'>
+            <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Lamp Systems&quot;' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings />
+          </pane>
+        </panes>
+        <rows>[sum:claim_amount_usd:qk]</rows>
+        <cols>[none:Calculation_OccurrenceMonth:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_SM_2'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
+            <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[none:part_category:nk]'>
+            <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Mirror Systems&quot;' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings />
+          </pane>
+        </panes>
+        <rows>[sum:claim_amount_usd:qk]</rows>
+        <cols>[none:Calculation_OccurrenceMonth:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_SM_3'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
+            <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[none:part_category:nk]'>
+            <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Chassis Systems&quot;' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings />
+          </pane>
+        </panes>
+        <rows>[sum:claim_amount_usd:qk]</rows>
+        <cols>[none:Calculation_OccurrenceMonth:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_SM_4'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
+            <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[none:part_category:nk]'>
+            <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Front End Module&quot;' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings />
+          </pane>
+        </panes>
+        <rows>[sum:claim_amount_usd:qk]</rows>
+        <cols>[none:Calculation_OccurrenceMonth:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_SM_5'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
+            <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+            <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <filter class='categorical' column='[none:part_category:nk]'>
+            <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Electrification&quot;' />
+          </filter>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings />
+          </pane>
+        </panes>
+        <rows>[sum:claim_amount_usd:qk]</rows>
+        <cols>[none:Calculation_OccurrenceMonth:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_Heatmap'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
+            <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
+            <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
+            <column-instance column='[production_plant]' derivation='None' name='[none:production_plant:nk]' pivot='key' type='nominal' />
+            <column-instance column='[defect_type_en]' derivation='None' name='[none:defect_type_en:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_id]' derivation='Count' name='[count:claim_id:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Square' />
+            <encodings>
+              <color column='[count:claim_id:nk]' />
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:production_plant:nk]</rows>
+        <cols>[none:defect_type_en:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_Rank_Category'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:part_category:nk]</rows>
+        <cols>[sum:claim_amount_usd:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_Rank_DefectCount'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
+            <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
+            <column-instance column='[defect_type_en]' derivation='None' name='[none:defect_type_en:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_id]' derivation='Count' name='[count:claim_id:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:defect_type_en:nk]</rows>
+        <cols>[count:claim_id:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='2_CustComposition'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:customer:nk]</rows>
+        <cols>[sum:claim_amount_usd:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='3_Status'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
+            <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
+            <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_id]' derivation='Count' name='[count:claim_id:nk]' pivot='key' type='nominal' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:claim_status:nk]</rows>
+        <cols>[count:claim_id:nk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='3_Cycle_Customer'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
+            <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
+            <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
+            <column-instance column='[Calculation_TotalCycleTime]' derivation='Avg' name='[avg:Calculation_TotalCycleTime:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:customer:nk]</rows>
+        <cols>[avg:Calculation_TotalCycleTime:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='3_Cycle_Plant'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
+            <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
+            <column-instance column='[production_plant]' derivation='None' name='[none:production_plant:nk]' pivot='key' type='nominal' />
+            <column-instance column='[Calculation_TotalCycleTime]' derivation='Avg' name='[avg:Calculation_TotalCycleTime:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:production_plant:nk]</rows>
+        <cols>[avg:Calculation_TotalCycleTime:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='3_Severity'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Severity' datatype='string' name='[severity]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[severity]' derivation='None' name='[none:severity:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+              <color column='[none:severity:nk]' />
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:severity:nk]</rows>
+        <cols>[sum:claim_amount_usd:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='3_LeadTime_Receive'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
+            <column caption='Lead Time To Receive' datatype='integer' name='[Calculation_LeadTimeToReceive]' role='measure' type='quantitative' />
+            <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
+            <column-instance column='[Calculation_LeadTimeToReceive]' derivation='Avg' name='[avg:Calculation_LeadTimeToReceive:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:claim_status:nk]</rows>
+        <cols>[avg:Calculation_LeadTimeToReceive:qk]</cols>
+      </table>
+    </worksheet>
+    <worksheet name='3_LeadTime_Confirm'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.297a4e8c9a6d4e28a69f' />
+          </datasources>
+          <datasource-dependencies datasource='federated.297a4e8c9a6d4e28a69f'>
+            <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
+            <column caption='Lead Time To Confirm' datatype='integer' name='[Calculation_LeadTimeToConfirm]' role='measure' type='quantitative' />
+            <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
+            <column-instance column='[Calculation_LeadTimeToConfirm]' derivation='Avg' name='[avg:Calculation_LeadTimeToConfirm:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings>
+            </encodings>
+          </pane>
+        </panes>
+        <rows>[none:claim_status:nk]</rows>
+        <cols>[avg:Calculation_LeadTimeToConfirm:qk]</cols>
       </table>
     </worksheet>
   </worksheets>
+  <dashboards>
+    <dashboard name='1. 종합 요약'>
+      <style />
+      <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' sizing-mode='fixed' />
+      <zones>
+        <zone h='100000' id='17' type-v2='layout-basic' w='100000' x='0' y='0'>
+      <zone h='16666' id='11' name='1_KPI' w='100000' x='0' y='0' />
+      <zone h='16666' id='12' name='1_Trend' w='100000' x='0' y='16666' />
+      <zone h='16666' id='13' name='1_Map' w='100000' x='0' y='33332' />
+      <zone h='16666' id='14' name='1_Top5_Customer' w='100000' x='0' y='49998' />
+      <zone h='16666' id='15' name='1_Top5_Defect' w='100000' x='0' y='66664' />
+      <zone h='16666' id='16' name='1_Top5_Plant' w='100000' x='0' y='83330' />
+        </zone>
+      </zones>
+    </dashboard>
+    <dashboard name='2. 원인 드릴다운'>
+      <style />
+      <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' sizing-mode='fixed' />
+      <zones>
+        <zone h='100000' id='27' type-v2='layout-basic' w='100000' x='0' y='0'>
+      <zone h='11111' id='18' name='2_SM_1' w='100000' x='0' y='0' />
+      <zone h='11111' id='19' name='2_SM_2' w='100000' x='0' y='11111' />
+      <zone h='11111' id='20' name='2_SM_3' w='100000' x='0' y='22222' />
+      <zone h='11111' id='21' name='2_SM_4' w='100000' x='0' y='33333' />
+      <zone h='11111' id='22' name='2_SM_5' w='100000' x='0' y='44444' />
+      <zone h='11111' id='23' name='2_Heatmap' w='100000' x='0' y='55555' />
+      <zone h='11111' id='24' name='2_Rank_Category' w='100000' x='0' y='66666' />
+      <zone h='11111' id='25' name='2_Rank_DefectCount' w='100000' x='0' y='77777' />
+      <zone h='11111' id='26' name='2_CustComposition' w='100000' x='0' y='88888' />
+        </zone>
+      </zones>
+    </dashboard>
+    <dashboard name='3. 리드타임 효율'>
+      <style />
+      <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' sizing-mode='fixed' />
+      <zones>
+        <zone h='100000' id='34' type-v2='layout-basic' w='100000' x='0' y='0'>
+      <zone h='16666' id='28' name='3_Status' w='100000' x='0' y='0' />
+      <zone h='16666' id='29' name='3_Cycle_Customer' w='100000' x='0' y='16666' />
+      <zone h='16666' id='30' name='3_Cycle_Plant' w='100000' x='0' y='33332' />
+      <zone h='16666' id='31' name='3_Severity' w='100000' x='0' y='49998' />
+      <zone h='16666' id='32' name='3_LeadTime_Receive' w='100000' x='0' y='66664' />
+      <zone h='16666' id='33' name='3_LeadTime_Confirm' w='100000' x='0' y='83330' />
+        </zone>
+      </zones>
+    </dashboard>
+  </dashboards>
   <windows>
-    <window class='worksheet' name='Sheet 1'>
+    <window class='worksheet' name='1_KPI'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='1_Trend'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='1_Map'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='1_Top5_Customer'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='1_Top5_Defect'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='1_Top5_Plant'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_SM_1'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_SM_2'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_SM_3'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_SM_4'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_SM_5'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_Heatmap'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_Rank_Category'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_Rank_DefectCount'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='2_CustComposition'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='3_Status'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='3_Cycle_Customer'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='3_Cycle_Plant'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='3_Severity'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='3_LeadTime_Receive'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='worksheet' name='3_LeadTime_Confirm'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='dashboard' name='1. 종합 요약'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='dashboard' name='2. 원인 드릴다운'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='dashboard' name='3. 리드타임 효율'>
       <cards>
         <edge name='left'>
           <strip size='160'>
