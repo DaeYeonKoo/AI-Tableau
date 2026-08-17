@@ -151,15 +151,28 @@ def field_ref(name):
 
 
 def col_instance(name, derivation, alias=None):
-    """rows/cols/encodings에서 쓸 column-instance 이름/타입/베이스컬럼 정보를 묶어서 반환."""
+    """rows/cols/encodings에서 쓸 column-instance 이름/타입/베이스컬럼 정보를 묶어서 반환.
+
+    중요: rows/cols/encodings/filter의 column 속성은 데이터소스 이름까지 포함한
+    "[federated.xxx].[instance]" 형태(qualified)로 써야 함 - 1차 시도 이후 리팩토링
+    과정에서 이 접두사가 빠졌던 게 2차 실패("필드가 없습니다")의 주된 원인으로 추정됨.
+    <column-instance name='...'> 선언 자체의 name 속성은 접두사 없는 bare 형태 사용.
+    """
     ref = field_ref(name)
     dtype, role, ftype = FIELD_TYPES[ref]
-    is_measure = ftype == "quantitative"
+    # 집계(Sum/Count/Avg 등)를 적용하면 원본 필드 타입과 무관하게 결과는 항상 quantitative
+    if derivation == "None":
+        out_ftype = ftype
+    else:
+        out_ftype = "quantitative"
+    is_measure = out_ftype == "quantitative"
     suffix = "qk" if is_measure else "nk"
     inst_name = f"[{derivation.lower()}:{ref}:{suffix}]"
+    qualified = f"[{DS_NAME}].{inst_name}"
     return {
-        "ref": ref, "dtype": dtype, "role": role, "ftype": ftype,
-        "inst_name": inst_name, "derivation": derivation, "is_measure": is_measure,
+        "ref": ref, "dtype": dtype, "role": role, "ftype": out_ftype,
+        "inst_name": inst_name, "qualified": qualified,
+        "derivation": derivation, "is_measure": is_measure,
         "caption": alias or caption_of(ref),
     }
 
@@ -200,7 +213,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar"):
     if color_dim:
         cci = col_instance(color_dim, "None")
         cis.append(cci)
-        color_xml = f"\n              <color column='{cci['inst_name']}' />"
+        color_xml = f"\n              <color column='{cci['qualified']}' />"
     deps = datasource_dependencies(cis)
     return f"""    <worksheet name='{name}'>
       <table>
@@ -224,8 +237,8 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar"):
             </encodings>
           </pane>
         </panes>
-        <rows>{dci['inst_name']}</rows>
-        <cols>{mci['inst_name']}</cols>
+        <rows>{dci['qualified']}</rows>
+        <cols>{mci['qualified']}</cols>
       </table>
     </worksheet>"""
 
@@ -254,12 +267,12 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
             </view>
             <mark class='Square' />
             <encodings>
-              <color column='{mci['inst_name']}' />
+              <color column='{mci['qualified']}' />
             </encodings>
           </pane>
         </panes>
-        <rows>{rci['inst_name']}</rows>
-        <cols>{cci['inst_name']}</cols>
+        <rows>{rci['qualified']}</rows>
+        <cols>{cci['qualified']}</cols>
       </table>
     </worksheet>"""
 
@@ -289,8 +302,8 @@ def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line"):
             <encodings />
           </pane>
         </panes>
-        <rows>{mci['inst_name']}</rows>
-        <cols>{dci['inst_name']}</cols>
+        <rows>{mci['qualified']}</rows>
+        <cols>{dci['qualified']}</cols>
       </table>
     </worksheet>"""
 
@@ -310,7 +323,7 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
-          <filter class='categorical' column='{fci['inst_name']}'>
+          <filter class='categorical' column='{fci['qualified']}'>
             <groupfilter function='member' level='{fci['inst_name']}' member='&quot;{part_category_literal}&quot;' />
           </filter>
           <aggregation value='true' />
@@ -325,8 +338,8 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
             <encodings />
           </pane>
         </panes>
-        <rows>{mci['inst_name']}</rows>
-        <cols>{dci['inst_name']}</cols>
+        <rows>{mci['qualified']}</rows>
+        <cols>{dci['qualified']}</cols>
       </table>
     </worksheet>"""
 
@@ -355,12 +368,12 @@ def ws_kpi_text(name):
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='{mci['inst_name']}' />
+              <text column='{mci['qualified']}' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>{cci['inst_name']}</cols>
+        <cols>{cci['qualified']}</cols>
       </table>
     </worksheet>"""
 
@@ -391,13 +404,13 @@ def ws_map(name):
             </view>
             <mark class='Circle' />
             <encodings>
-              <size column='{mci['inst_name']}' />
-              <level column='{ctry['inst_name']}' />
+              <size column='{mci['qualified']}' />
+              <level column='{ctry['qualified']}' />
             </encodings>
           </pane>
         </panes>
-        <rows>{lat['inst_name']}</rows>
-        <cols>{lon['inst_name']}</cols>
+        <rows>{lat['qualified']}</rows>
+        <cols>{lon['qualified']}</cols>
       </table>
     </worksheet>"""
 
