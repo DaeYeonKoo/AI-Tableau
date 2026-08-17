@@ -105,27 +105,42 @@ WORKSHEET_XML = f"""    <worksheet name='Test_Sheet'>
       </table>
     </worksheet>"""
 
-DASHBOARD_DEPS = f"""            <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
-            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
-            <column-instance column='[customer]' derivation='None' name='{DIM_INST}' pivot='key' type='nominal' />
-            <column-instance column='[claim_amount_usd]' derivation='Sum' name='{MEAS_INST}' pivot='key' type='quantitative' />"""
+ZONE_STYLE = """            <zone-style>
+              <format attr='border-color' value='#000000' />
+              <format attr='border-style' value='none' />
+              <format attr='border-width' value='0' />
+              <format attr='margin' value='4' />
+            </zone-style>"""
+OUTER_ZONE_STYLE = """          <zone-style>
+            <format attr='border-color' value='#000000' />
+            <format attr='border-style' value='none' />
+            <format attr='border-width' value='0' />
+            <format attr='margin' value='8' />
+          </zone-style>"""
 
-DASHBOARD_XML = f"""    <dashboard name='Test_Dashboard'>
+# 실물 확인 + 최근 D2E8DA72 실제 로드 오류로 확정된 대시보드 구조 그대로 재현
+# (datasources/datasource-dependencies 없음, type-v2 없음, sizing-mode 없음,
+#  zone-style 있음, devicelayouts에 Phone 실내용, simple-id 계열 전부 없음)
+DASHBOARD_XML = f"""    <dashboard name='Test_Dashboard2'>
       <style />
-      <size sizing-mode='automatic' />
-      <datasources>
-        <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
-      </datasources>
-      <datasource-dependencies datasource='{DS_NAME}'>
-{DASHBOARD_DEPS}
-      </datasource-dependencies>
+      <size maxheight='800' maxwidth='1000' minheight='800' minwidth='1000' />
       <zones>
         <zone h='100000' id='2' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='100000' id='3' name='Test_Sheet' type-v2='visual' w='100000' x='0' y='0' />
+          <zone h='100000' id='3' name='Test_Sheet' w='100000' x='0' y='0'>
+{ZONE_STYLE}
+          </zone>
+{OUTER_ZONE_STYLE}
         </zone>
       </zones>
       <devicelayouts>
-        <devicelayout name='Desktop' />
+        <devicelayout name='Phone'>
+          <size maxheight='700' minheight='700' sizing-mode='vscroll' />
+          <zones>
+            <zone h='100000' id='5' type-v2='layout-basic' w='100000' x='0' y='0'>
+              <zone h='100000' id='6' name='Test_Sheet' w='100000' x='0' y='0' />
+            </zone>
+          </zones>
+        </devicelayout>
       </devicelayouts>
     </dashboard>"""
 
@@ -152,7 +167,7 @@ CARDS_BLOCK = """      <cards>
 WINDOWS_XML = f"""    <window class='worksheet' name='Test_Sheet'>
 {CARDS_BLOCK}
     </window>
-    <window class='dashboard' name='Test_Dashboard'>
+    <window class='dashboard' name='Test_Dashboard2'>
       <viewpoints />
       <active id='0' />
     </window>"""
@@ -194,7 +209,7 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
 </workbook>
 """
 
-OUT_PATH = "Dashboard_Isolation_Test.twb"
+OUT_PATH = "Dashboard_Isolation_Test2.twb"
 with open(OUT_PATH, "w", encoding="utf-8") as f:
     f.write(WORKBOOK)
 print(f"wrote {OUT_PATH} ({len(WORKBOOK)} bytes)")
