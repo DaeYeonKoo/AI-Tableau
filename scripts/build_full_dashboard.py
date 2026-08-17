@@ -550,11 +550,21 @@ CARDS_BLOCK = """      <cards>
         </edge>
       </cards>"""
 
+# 확정된 사실(2026.2 XSD): 워크시트 창(Window-WorksheetWindow-G)과 대시보드 창
+# (Window-DashboardWindow-G)은 완전히 다른 내용 모델을 씀.
+#   - 워크시트: Cards-G + VisualDoc-G(선택) + simple-id(선택)  -> 지금까지 쓴 <cards> 구조가 맞음
+#   - 대시보드: VisualDocs-G(<viewpoints>) + <active> 필수 + grid(선택) + simple-id(선택)
+#     대시보드 창에도 <cards>를 그대로 재사용한 게 2805CF18의 유력한 원인으로 추정됨 - 이번에 분리.
 window_blocks = []
 for sn in worksheet_names:
     window_blocks.append(f"    <window class='worksheet' name='{sn}'>\n{CARDS_BLOCK}\n    </window>")
 for dn in PAGE_SHEETS.keys():
-    window_blocks.append(f"    <window class='dashboard' name='{dn}'>\n{CARDS_BLOCK}\n    </window>")
+    window_blocks.append(
+        f"    <window class='dashboard' name='{dn}'>\n"
+        f"      <viewpoints />\n"
+        f"      <active id='0' />\n"
+        f"    </window>"
+    )
 WINDOWS_XML = "\n".join(window_blocks)
 
 # ------------------------------------------------------------------
