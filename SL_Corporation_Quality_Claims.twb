@@ -6,15 +6,15 @@
   <preferences />
   <style />
   <datasources>
-    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.bc0f2f6899514faeabc6' version='18.1'>
+    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.d2d0631a5d4946989b57' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.06943b47cc23430182d8'>
+          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.99acc6d47c054bc4868d'>
             <connection class='textscan' directory='c:/Users/milvus-Tom/.claude/Project/AI-Tableau/data' filename='sl_corporation_quality_claims.csv'
                         password='' server='' />
           </named-connection>
         </named-connections>
-        <relation connection='textscan.06943b47cc23430182d8' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
+        <relation connection='textscan.99acc6d47c054bc4868d' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
         <metadata-records>
         <metadata-record class='column'>
           <remote-name>claim_id</remote-name>
@@ -356,9 +356,9 @@
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[claim_id]' derivation='Count' name='[count:claim_id:qk]' pivot='key' type='quantitative' />
@@ -374,21 +374,21 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]' />
+              <text column='[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[count:claim_id:qk]</cols>
+        <cols>[federated.d2d0631a5d4946989b57].[count:claim_id:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Trend'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[Calculation_OccurrenceMonth]' derivation='None' name='[none:Calculation_OccurrenceMonth:nk]' pivot='key' type='ordinal' />
@@ -406,17 +406,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Map'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Latitude (generated)' datatype='real' name='[Latitude (generated)]' role='measure' type='quantitative' />
             <column caption='Longitude (generated)' datatype='real' name='[Longitude (generated)]' role='measure' type='quantitative' />
             <column caption='Claim Country' datatype='string' name='[claim_country]' role='dimension' type='nominal' />
@@ -436,22 +436,22 @@
             </view>
             <mark class='Circle' />
             <encodings>
-              <size column='[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]' />
-              <level column='[federated.bc0f2f6899514faeabc6].[none:claim_country:nk]' />
+              <size column='[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]' />
+              <level column='[federated.d2d0631a5d4946989b57].[none:claim_country:nk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:Latitude (generated):qk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:Longitude (generated):qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:Latitude (generated):qk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:Longitude (generated):qk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Top5_Customer'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
@@ -470,17 +470,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:customer:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:customer:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Top5_Defect'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[defect_type_en]' derivation='None' name='[none:defect_type_en:nk]' pivot='key' type='nominal' />
@@ -499,17 +499,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:defect_type_en:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:defect_type_en:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='1_Top5_Plant'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[production_plant]' derivation='None' name='[none:production_plant:nk]' pivot='key' type='nominal' />
@@ -528,17 +528,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:production_plant:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:production_plant:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_1'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -546,7 +546,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.bc0f2f6899514faeabc6].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.d2d0631a5d4946989b57].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Lamp Systems&quot;' />
           </filter>
           <aggregation value='true' />
@@ -561,17 +561,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_2'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -579,7 +579,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.bc0f2f6899514faeabc6].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.d2d0631a5d4946989b57].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Mirror Systems&quot;' />
           </filter>
           <aggregation value='true' />
@@ -594,17 +594,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_3'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -612,7 +612,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.bc0f2f6899514faeabc6].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.d2d0631a5d4946989b57].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Chassis Systems&quot;' />
           </filter>
           <aggregation value='true' />
@@ -627,17 +627,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_4'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -645,7 +645,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.bc0f2f6899514faeabc6].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.d2d0631a5d4946989b57].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Front End Module&quot;' />
           </filter>
           <aggregation value='true' />
@@ -660,17 +660,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_SM_5'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -678,7 +678,7 @@
             <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.bc0f2f6899514faeabc6].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.d2d0631a5d4946989b57].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Electrification&quot;' />
           </filter>
           <aggregation value='true' />
@@ -693,17 +693,17 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_Heatmap'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
@@ -721,21 +721,21 @@
             </view>
             <mark class='Square' />
             <encodings>
-              <color column='[federated.bc0f2f6899514faeabc6].[count:claim_id:qk]' />
+              <color column='[federated.d2d0631a5d4946989b57].[count:claim_id:qk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:production_plant:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[none:defect_type_en:nk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:production_plant:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[none:defect_type_en:nk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_Rank_Category'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[part_category]' derivation='None' name='[none:part_category:nk]' pivot='key' type='nominal' />
@@ -754,17 +754,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:part_category:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:part_category:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_Rank_DefectCount'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column-instance column='[defect_type_en]' derivation='None' name='[none:defect_type_en:nk]' pivot='key' type='nominal' />
@@ -783,17 +783,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:defect_type_en:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[count:claim_id:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:defect_type_en:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[count:claim_id:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='2_CustComposition'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
@@ -812,17 +812,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:customer:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:customer:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Status'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
@@ -841,17 +841,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:claim_status:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[count:claim_id:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:claim_status:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[count:claim_id:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Cycle_Customer'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
             <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
@@ -870,17 +870,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:customer:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[avg:Calculation_TotalCycleTime:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:customer:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[avg:Calculation_TotalCycleTime:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Cycle_Plant'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
             <column-instance column='[production_plant]' derivation='None' name='[none:production_plant:nk]' pivot='key' type='nominal' />
@@ -899,17 +899,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:production_plant:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[avg:Calculation_TotalCycleTime:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:production_plant:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[avg:Calculation_TotalCycleTime:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_Severity'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Severity' datatype='string' name='[severity]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[severity]' derivation='None' name='[none:severity:nk]' pivot='key' type='nominal' />
@@ -925,21 +925,21 @@
             </view>
             <mark class='Bar' />
             <encodings>
-              <color column='[federated.bc0f2f6899514faeabc6].[none:severity:nk]' />
+              <color column='[federated.d2d0631a5d4946989b57].[none:severity:nk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:severity:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:severity:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_LeadTime_Receive'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Lead Time To Receive' datatype='integer' name='[Calculation_LeadTimeToReceive]' role='measure' type='quantitative' />
             <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
@@ -958,17 +958,17 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:claim_status:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[avg:Calculation_LeadTimeToReceive:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:claim_status:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[avg:Calculation_LeadTimeToReceive:qk]</cols>
       </table>
     </worksheet>
     <worksheet name='3_LeadTime_Confirm'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.bc0f2f6899514faeabc6' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.d2d0631a5d4946989b57' />
           </datasources>
-          <datasource-dependencies datasource='federated.bc0f2f6899514faeabc6'>
+          <datasource-dependencies datasource='federated.d2d0631a5d4946989b57'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Lead Time To Confirm' datatype='integer' name='[Calculation_LeadTimeToConfirm]' role='measure' type='quantitative' />
             <column-instance column='[claim_status]' derivation='None' name='[none:claim_status:nk]' pivot='key' type='nominal' />
@@ -987,8 +987,8 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.bc0f2f6899514faeabc6].[none:claim_status:nk]</rows>
-        <cols>[federated.bc0f2f6899514faeabc6].[avg:Calculation_LeadTimeToConfirm:qk]</cols>
+        <rows>[federated.d2d0631a5d4946989b57].[none:claim_status:nk]</rows>
+        <cols>[federated.d2d0631a5d4946989b57].[avg:Calculation_LeadTimeToConfirm:qk]</cols>
       </table>
     </worksheet>
   </worksheets>
@@ -1058,18 +1058,18 @@
         <devicelayout name='Phone'>
           <size maxheight='2200' minheight='2200' sizing-mode='vscroll' />
           <zones>
-        <zone h='100000' id='24' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='16666' id='18' name='1_KPI' w='100000' x='0' y='0'>
+        <zone h='100000' id='18' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='16666' id='11' name='1_KPI' w='100000' x='0' y='0'>
           </zone>
-          <zone h='16666' id='19' name='1_Trend' w='100000' x='0' y='16666'>
+          <zone h='16666' id='12' name='1_Trend' w='100000' x='0' y='16666'>
           </zone>
-          <zone h='16666' id='20' name='1_Map' w='100000' x='0' y='33332'>
+          <zone h='16666' id='13' name='1_Map' w='100000' x='0' y='33332'>
           </zone>
-          <zone h='16666' id='21' name='1_Top5_Customer' w='100000' x='0' y='49998'>
+          <zone h='16666' id='14' name='1_Top5_Customer' w='100000' x='0' y='49998'>
           </zone>
-          <zone h='16666' id='22' name='1_Top5_Defect' w='100000' x='0' y='66664'>
+          <zone h='16666' id='15' name='1_Top5_Defect' w='100000' x='0' y='66664'>
           </zone>
-          <zone h='16666' id='23' name='1_Top5_Plant' w='100000' x='0' y='83330'>
+          <zone h='16666' id='16' name='1_Top5_Plant' w='100000' x='0' y='83330'>
           </zone>
         </zone>
           </zones>
@@ -1080,8 +1080,8 @@
       <style />
       <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' />
       <zones>
-        <zone h='100000' id='34' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='11111' id='25' name='2_SM_1' w='100000' x='0' y='0'>
+        <zone h='100000' id='28' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='11111' id='19' name='2_SM_1' w='100000' x='0' y='0'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1089,7 +1089,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='26' name='2_SM_2' w='100000' x='0' y='11111'>
+          <zone h='11111' id='20' name='2_SM_2' w='100000' x='0' y='11111'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1097,7 +1097,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='27' name='2_SM_3' w='100000' x='0' y='22222'>
+          <zone h='11111' id='21' name='2_SM_3' w='100000' x='0' y='22222'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1105,7 +1105,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='28' name='2_SM_4' w='100000' x='0' y='33333'>
+          <zone h='11111' id='22' name='2_SM_4' w='100000' x='0' y='33333'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1113,7 +1113,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='29' name='2_SM_5' w='100000' x='0' y='44444'>
+          <zone h='11111' id='23' name='2_SM_5' w='100000' x='0' y='44444'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1121,7 +1121,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='30' name='2_Heatmap' w='100000' x='0' y='55555'>
+          <zone h='11111' id='24' name='2_Heatmap' w='100000' x='0' y='55555'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1129,7 +1129,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='31' name='2_Rank_Category' w='100000' x='0' y='66666'>
+          <zone h='11111' id='25' name='2_Rank_Category' w='100000' x='0' y='66666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1137,7 +1137,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='32' name='2_Rank_DefectCount' w='100000' x='0' y='77777'>
+          <zone h='11111' id='26' name='2_Rank_DefectCount' w='100000' x='0' y='77777'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1145,7 +1145,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='11111' id='33' name='2_CustComposition' w='100000' x='0' y='88888'>
+          <zone h='11111' id='27' name='2_CustComposition' w='100000' x='0' y='88888'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1165,24 +1165,24 @@
         <devicelayout name='Phone'>
           <size maxheight='2200' minheight='2200' sizing-mode='vscroll' />
           <zones>
-        <zone h='100000' id='44' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='11111' id='35' name='2_SM_1' w='100000' x='0' y='0'>
+        <zone h='100000' id='29' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='11111' id='19' name='2_SM_1' w='100000' x='0' y='0'>
           </zone>
-          <zone h='11111' id='36' name='2_SM_2' w='100000' x='0' y='11111'>
+          <zone h='11111' id='20' name='2_SM_2' w='100000' x='0' y='11111'>
           </zone>
-          <zone h='11111' id='37' name='2_SM_3' w='100000' x='0' y='22222'>
+          <zone h='11111' id='21' name='2_SM_3' w='100000' x='0' y='22222'>
           </zone>
-          <zone h='11111' id='38' name='2_SM_4' w='100000' x='0' y='33333'>
+          <zone h='11111' id='22' name='2_SM_4' w='100000' x='0' y='33333'>
           </zone>
-          <zone h='11111' id='39' name='2_SM_5' w='100000' x='0' y='44444'>
+          <zone h='11111' id='23' name='2_SM_5' w='100000' x='0' y='44444'>
           </zone>
-          <zone h='11111' id='40' name='2_Heatmap' w='100000' x='0' y='55555'>
+          <zone h='11111' id='24' name='2_Heatmap' w='100000' x='0' y='55555'>
           </zone>
-          <zone h='11111' id='41' name='2_Rank_Category' w='100000' x='0' y='66666'>
+          <zone h='11111' id='25' name='2_Rank_Category' w='100000' x='0' y='66666'>
           </zone>
-          <zone h='11111' id='42' name='2_Rank_DefectCount' w='100000' x='0' y='77777'>
+          <zone h='11111' id='26' name='2_Rank_DefectCount' w='100000' x='0' y='77777'>
           </zone>
-          <zone h='11111' id='43' name='2_CustComposition' w='100000' x='0' y='88888'>
+          <zone h='11111' id='27' name='2_CustComposition' w='100000' x='0' y='88888'>
           </zone>
         </zone>
           </zones>
@@ -1193,8 +1193,8 @@
       <style />
       <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' />
       <zones>
-        <zone h='100000' id='51' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='16666' id='45' name='3_Status' w='100000' x='0' y='0'>
+        <zone h='100000' id='36' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='16666' id='30' name='3_Status' w='100000' x='0' y='0'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1202,7 +1202,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='16666' id='46' name='3_Cycle_Customer' w='100000' x='0' y='16666'>
+          <zone h='16666' id='31' name='3_Cycle_Customer' w='100000' x='0' y='16666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1210,7 +1210,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='16666' id='47' name='3_Cycle_Plant' w='100000' x='0' y='33332'>
+          <zone h='16666' id='32' name='3_Cycle_Plant' w='100000' x='0' y='33332'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1218,7 +1218,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='16666' id='48' name='3_Severity' w='100000' x='0' y='49998'>
+          <zone h='16666' id='33' name='3_Severity' w='100000' x='0' y='49998'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1226,7 +1226,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='16666' id='49' name='3_LeadTime_Receive' w='100000' x='0' y='66664'>
+          <zone h='16666' id='34' name='3_LeadTime_Receive' w='100000' x='0' y='66664'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1234,7 +1234,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='16666' id='50' name='3_LeadTime_Confirm' w='100000' x='0' y='83330'>
+          <zone h='16666' id='35' name='3_LeadTime_Confirm' w='100000' x='0' y='83330'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -1254,18 +1254,18 @@
         <devicelayout name='Phone'>
           <size maxheight='2200' minheight='2200' sizing-mode='vscroll' />
           <zones>
-        <zone h='100000' id='58' type-v2='layout-basic' w='100000' x='0' y='0'>
-          <zone h='16666' id='52' name='3_Status' w='100000' x='0' y='0'>
+        <zone h='100000' id='37' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='16666' id='30' name='3_Status' w='100000' x='0' y='0'>
           </zone>
-          <zone h='16666' id='53' name='3_Cycle_Customer' w='100000' x='0' y='16666'>
+          <zone h='16666' id='31' name='3_Cycle_Customer' w='100000' x='0' y='16666'>
           </zone>
-          <zone h='16666' id='54' name='3_Cycle_Plant' w='100000' x='0' y='33332'>
+          <zone h='16666' id='32' name='3_Cycle_Plant' w='100000' x='0' y='33332'>
           </zone>
-          <zone h='16666' id='55' name='3_Severity' w='100000' x='0' y='49998'>
+          <zone h='16666' id='33' name='3_Severity' w='100000' x='0' y='49998'>
           </zone>
-          <zone h='16666' id='56' name='3_LeadTime_Receive' w='100000' x='0' y='66664'>
+          <zone h='16666' id='34' name='3_LeadTime_Receive' w='100000' x='0' y='66664'>
           </zone>
-          <zone h='16666' id='57' name='3_LeadTime_Confirm' w='100000' x='0' y='83330'>
+          <zone h='16666' id='35' name='3_LeadTime_Confirm' w='100000' x='0' y='83330'>
           </zone>
         </zone>
           </zones>
@@ -1716,16 +1716,40 @@
       </cards>
     </window>
     <window class='dashboard' name='1. 종합 요약'>
-      <viewpoints />
-      <active id='0' />
+      <viewpoints>
+        <viewpoint name='1_KPI' />
+        <viewpoint name='1_Trend' />
+        <viewpoint name='1_Map' />
+        <viewpoint name='1_Top5_Customer' />
+        <viewpoint name='1_Top5_Defect' />
+        <viewpoint name='1_Top5_Plant' />
+      </viewpoints>
+      <active id='11' />
     </window>
     <window class='dashboard' name='2. 원인 드릴다운'>
-      <viewpoints />
-      <active id='0' />
+      <viewpoints>
+        <viewpoint name='2_SM_1' />
+        <viewpoint name='2_SM_2' />
+        <viewpoint name='2_SM_3' />
+        <viewpoint name='2_SM_4' />
+        <viewpoint name='2_SM_5' />
+        <viewpoint name='2_Heatmap' />
+        <viewpoint name='2_Rank_Category' />
+        <viewpoint name='2_Rank_DefectCount' />
+        <viewpoint name='2_CustComposition' />
+      </viewpoints>
+      <active id='19' />
     </window>
     <window class='dashboard' name='3. 리드타임 효율'>
-      <viewpoints />
-      <active id='0' />
+      <viewpoints>
+        <viewpoint name='3_Status' />
+        <viewpoint name='3_Cycle_Customer' />
+        <viewpoint name='3_Cycle_Plant' />
+        <viewpoint name='3_Severity' />
+        <viewpoint name='3_LeadTime_Receive' />
+        <viewpoint name='3_LeadTime_Confirm' />
+      </viewpoints>
+      <active id='30' />
     </window>
   </windows>
 </workbook>

@@ -497,38 +497,49 @@ OUTER_ZONE_STYLE = """          <zone-style>
           </zone-style>"""
 
 
-def build_zone_tree(sheet_names, id_gen, with_style=True):
+DASHBOARD_ZONE_IDS = {}  # dash_name -> {sheet_name: zone_id} (desktop 기준) - window의 active/viewpoints에 재사용
+
+
+def build_zone_tree(sheet_names, id_gen, with_style=True, reuse_ids=None):
     """워크시트를 담는 zone들 + 그걸 감싸는 layout-basic 컨테이너 zone까지 통째로 생성.
-    실물 파일('대시보드 2')에서 확인된 그대로: 안쪽 zone엔 type-v2 없음, zone마다 zone-style 있음."""
+    실물 파일('대시보드 2')에서 확인된 그대로: 안쪽 zone엔 type-v2 없음, zone마다 zone-style 있음.
+    reuse_ids가 주어지면(=phone 레이아웃 생성 시) 워크시트 zone의 id를 desktop과 동일하게 재사용함
+    - 실물 파일에서 동일 워크시트의 desktop/phone zone이 같은 id(3)를 공유하는 게 확인됨.
+    반환: (zone_xml, {sheet_name: zone_id})
+    """
     n = len(sheet_names)
     h_each = 100000 // n
     inner_parts = []
+    assigned = {}
     for i, sn in enumerate(sheet_names):
-        zid = id_gen()
+        zid = reuse_ids[sn] if reuse_ids else id_gen()
+        assigned[sn] = zid
         y = i * h_each
         style = "\n" + ZONE_STYLE if with_style else ""
         inner_parts.append(f"          <zone h='{h_each}' id='{zid}' name='{sn}' w='100000' x='0' y='{y}'>{style}\n          </zone>")
     outer_id = id_gen()
     inner_xml = "\n".join(inner_parts)
     outer_style = "\n" + OUTER_ZONE_STYLE if with_style else ""
-    return f"""        <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
+    zone_xml = f"""        <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
 {inner_xml}{outer_style}
         </zone>"""
+    return zone_xml, assigned
 
 
 def build_dashboard(dash_name, sheet_names):
     # 실물 확인('대시보드 2', 사용자가 Tableau UI로 만들어 저장 - 정상 동작) + 로드 시점 실제
-    # 오류(D2E8DA72, 이번 회차)를 합쳐서 최종 확정:
+    # 오류(D2E8DA72)를 합쳐서 확정한 구조:
     #   - <datasources>/<datasource-dependencies>는 대시보드에 아예 없음
     #   - 워크시트를 담는 zone엔 type-v2가 없음
     #   - <size>는 sizing-mode 없이 명시적 min/max로 지정
     #   - zone마다 <zone-style> 서식 블록 포함
-    #   - <devicelayouts>에 Phone 레이아웃이 실제 내용(자체 size+zones)으로 채워져 있음
+    #   - <devicelayouts>에 Phone 레이아웃이 실제 내용(자체 size+zones)으로 채워져 있고,
+    #     워크시트 zone은 desktop과 동일 id를 재사용함
     #   - simple-id / enable-sort-zone-taborder / devicelayout의 auto-generated는
-    #     Tableau가 "저장할 때" 쓰는 표기일 뿐, 사람이 "새로 작성해서 로드"할 때는
-    #     허용되지 않음(로더가 쓰는 검증 스키마가 저장 포맷보다 엄격함) - 전부 제외.
-    desktop_zones = build_zone_tree(sheet_names, next_zone_id, with_style=True)
-    phone_zones = build_zone_tree(sheet_names, next_zone_id, with_style=False)
+    #     Tableau가 "저장할 때" 쓰는 표기일 뿐, 로드 시엔 허용되지 않아 전부 제외.
+    desktop_zones, sheet_zone_ids = build_zone_tree(sheet_names, next_zone_id, with_style=True)
+    phone_zones, _ = build_zone_tree(sheet_names, next_zone_id, with_style=False, reuse_ids=sheet_zone_ids)
+    DASHBOARD_ZONE_IDS[dash_name] = sheet_zone_ids
     return f"""    <dashboard name='{dash_name}'>
       <style />
       <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' />
@@ -579,11 +590,17 @@ CARDS_BLOCK = """      <cards>
 window_blocks = []
 for sn in worksheet_names:
     window_blocks.append(f"    <window class='worksheet' name='{sn}'>\n{CARDS_BLOCK}\n    </window>")
-for dn in PAGE_SHEETS.keys():
+for dn, sheets in PAGE_SHEETS.items():
+    # 실물 확인('대시보드 2'): <viewpoints>는 비어있지 않고 워크시트별 <viewpoint name='...'/>를
+    # 담고 있었으며, <active id='...'/>는 실제 zone id(더미 '0'이 아님 - 존재하지 않는 zone을
+    # 가리키면 크래시로 이어졌을 가능성 높음)를 가리켰음. 첫 워크시트의 zone id를 active로 사용.
+    zone_ids = DASHBOARD_ZONE_IDS[dn]
+    viewpoints_xml = "\n".join(f"        <viewpoint name='{sn}' />" for sn in sheets)
+    active_id = zone_ids[sheets[0]]
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
-        f"      <viewpoints />\n"
-        f"      <active id='0' />\n"
+        f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
+        f"      <active id='{active_id}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
