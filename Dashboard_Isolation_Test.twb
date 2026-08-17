@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='utf-8' ?>
+
+<workbook original-version='18.1' source-build='2025.3.0' source-platform='win' version='18.1'
+          xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <document-format-change-manifest />
+  <preferences />
+  <style />
+  <datasources>
+    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.701e170166a94bb6a884' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.491141f64a67414fbbd6'>
+            <connection class='textscan' directory='c:/Users/milvus-Tom/.claude/Project/AI-Tableau/data' filename='sl_corporation_quality_claims.csv'
+                        password='' server='' />
+          </named-connection>
+        </named-connections>
+        <relation connection='textscan.491141f64a67414fbbd6' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
+        <metadata-records>
+        <metadata-record class='column'>
+          <remote-name>claim_id</remote-name>
+          <remote-type>129</remote-type>
+          <local-name>[claim_id]</local-name>
+          <parent-name>[sl_corporation_quality_claims#csv]</parent-name>
+          <remote-alias>claim_id</remote-alias>
+          <ordinal>1</ordinal>
+          <family>sl_corporation_quality_claims.csv</family>
+          <local-type>string</local-type>
+          <aggregation>Count</aggregation>
+          <contains-null>true</contains-null>
+        </metadata-record>
+        <metadata-record class='column'>
+          <remote-name>customer</remote-name>
+          <remote-type>129</remote-type>
+          <local-name>[customer]</local-name>
+          <parent-name>[sl_corporation_quality_claims#csv]</parent-name>
+          <remote-alias>customer</remote-alias>
+          <ordinal>2</ordinal>
+          <family>sl_corporation_quality_claims.csv</family>
+          <local-type>string</local-type>
+          <aggregation>Count</aggregation>
+          <contains-null>true</contains-null>
+        </metadata-record>
+        <metadata-record class='column'>
+          <remote-name>claim_status</remote-name>
+          <remote-type>129</remote-type>
+          <local-name>[claim_status]</local-name>
+          <parent-name>[sl_corporation_quality_claims#csv]</parent-name>
+          <remote-alias>claim_status</remote-alias>
+          <ordinal>3</ordinal>
+          <family>sl_corporation_quality_claims.csv</family>
+          <local-type>string</local-type>
+          <aggregation>Count</aggregation>
+          <contains-null>true</contains-null>
+        </metadata-record>
+        <metadata-record class='column'>
+          <remote-name>claim_amount_usd</remote-name>
+          <remote-type>5</remote-type>
+          <local-name>[claim_amount_usd]</local-name>
+          <parent-name>[sl_corporation_quality_claims#csv]</parent-name>
+          <remote-alias>claim_amount_usd</remote-alias>
+          <ordinal>4</ordinal>
+          <family>sl_corporation_quality_claims.csv</family>
+          <local-type>real</local-type>
+          <aggregation>Sum</aggregation>
+          <contains-null>true</contains-null>
+        </metadata-record>
+        </metadata-records>
+      </connection>
+      <aliases enabled='yes' />
+    <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
+    <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
+    <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
+    <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Test_Sheet'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='federated.701e170166a94bb6a884' />
+          </datasources>
+          <datasource-dependencies datasource='federated.701e170166a94bb6a884'>
+            <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style />
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings />
+          </pane>
+        </panes>
+        <rows>[federated.701e170166a94bb6a884].[none:customer:nk]</rows>
+        <cols>[federated.701e170166a94bb6a884].[sum:claim_amount_usd:qk]</cols>
+      </table>
+    </worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard name='Test_Dashboard'>
+      <style />
+      <size sizing-mode='automatic' />
+      <datasources>
+        <datasource caption='sl_corporation_quality_claims' name='federated.701e170166a94bb6a884' />
+      </datasources>
+      <datasource-dependencies datasource='federated.701e170166a94bb6a884'>
+            <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
+            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
+            <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
+            <column-instance column='[claim_amount_usd]' derivation='Sum' name='[sum:claim_amount_usd:qk]' pivot='key' type='quantitative' />
+      </datasource-dependencies>
+      <zones>
+        <zone h='100000' id='2' type-v2='layout-basic' w='100000' x='0' y='0'>
+          <zone h='100000' id='3' name='Test_Sheet' type-v2='visual' w='100000' x='0' y='0' />
+        </zone>
+      </zones>
+      <devicelayouts>
+        <devicelayout name='Desktop' />
+      </devicelayouts>
+    </dashboard>
+  </dashboards>
+  <windows>
+    <window class='worksheet' name='Test_Sheet'>
+      <cards>
+        <edge name='left'>
+          <strip size='160'>
+            <card type='pages' />
+            <card type='filters' />
+            <card type='marks' />
+          </strip>
+        </edge>
+        <edge name='top'>
+          <strip size='2147483647'>
+            <card type='columns' />
+          </strip>
+        </edge>
+        <edge name='right'>
+          <strip size='160'>
+            <card type='measures' />
+          </strip>
+        </edge>
+      </cards>
+    </window>
+    <window class='dashboard' name='Test_Dashboard'>
+      <viewpoints />
+      <active id='0' />
+    </window>
+  </windows>
+</workbook>
