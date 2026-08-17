@@ -1,15 +1,17 @@
 # -*- coding: utf-8 -*-
 """
-최소 구성 .twb 생성 스크립트 (1단계 시드 테스트용).
+데이터 연결 전용 .twb 생성 스크립트 (2단계 시드 테스트용).
 
-목적: Tableau 구현 가이드.md 에서 확보한 지식(공식 XSD + 공식문서)으로 만든 첫 실제 시도.
-구성: CSV 데이터 연결 1개 + 컬럼 24개(타입 매핑) + 워크시트 1개(고객사별 클레임 금액 막대그래프).
-대시보드는 아직 없음 — 데이터 연결과 워크시트 자체가 Tableau에서 정상적으로 열리는지부터 확인.
+1차 시도(워크시트 포함)는 rows/cols 필드 주소 문법(`[none:customer:nk]` 등)이 틀려서
+통합 문서 자체가 열리지 않는 문제가 있었음(에러 9CA7205B) — 반면 최상위 구조와 CSV
+데이터 연결(federated/textscan/metadata-records/24개 column)은 이미 오류 없이 통과했음
+(1차 에러 D2E8DA72 수정 후 확인됨).
 
-가장 리스크가 큰 부분(주석 표시):
-  - <connection> 내부 구조 (공식 스키마도 검증 안 하는 영역)
-  - rows/cols 필드 표기 규칙 (:nk, :qk 접미사)
-  - workbook version/original-version 값 (2025.3 정확한 값 미확인, 18.1로 추정)
+그래서 이번엔 워크시트를 아예 빼고 **데이터 연결만** 남긴 버전을 만든다. 목적:
+  1) 이 파일이 정상적으로 열리는지 확인 (열려야 함 — 연결 자체는 이미 검증됨)
+  2) 열리면, 사용자가 Tableau UI에서 직접 간단한 차트(고객사 Rows + SUM(클레임금액) Columns)를
+     만들어 저장 → 그 결과물을 Claude가 읽어서 rows/cols의 정확한 필드 주소 문법을 확인
+     (PPT2에서 실제로 성공했던 방식과 동일 — 이제 이 방식으로 전환)
 """
 import os
 import re
@@ -169,59 +171,7 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
 {COLUMNS_XML}
     </datasource>
   </datasources>
-  <worksheets>
-    <worksheet name='0_Test_고객사별금액'>
-      <table>
-        <view>
-          <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
-          </datasources>
-          <datasource-dependencies datasource='{DS_NAME}'>
-            <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
-            <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
-          </datasource-dependencies>
-          <aggregation value='true' />
-        </view>
-        <style />
-        <panes>
-          <pane selection-relaxation-option='selection-relaxation-allow'>
-            <view>
-              <breakdown value='auto' />
-            </view>
-            <mark class='Automatic' />
-            <encodings>
-              <text column='[{DS_NAME}].[sum:claim_amount_usd:qk]' />
-            </encodings>
-          </pane>
-        </panes>
-        <rows>[{DS_NAME}].[none:customer:nk]</rows>
-        <cols>[{DS_NAME}].[sum:claim_amount_usd:qk]</cols>
-      </table>
-    </worksheet>
-  </worksheets>
-  <windows>
-    <window class='worksheet' name='0_Test_고객사별금액'>
-      <cards>
-        <edge name='left'>
-          <strip size='160'>
-            <card type='pages' />
-            <card type='filters' />
-            <card type='marks' />
-          </strip>
-        </edge>
-        <edge name='top'>
-          <strip size='2147483647'>
-            <card type='columns' />
-          </strip>
-        </edge>
-        <edge name='right'>
-          <strip size='160'>
-            <card type='measures' />
-          </strip>
-        </edge>
-      </cards>
-    </window>
-  </windows>
+  <windows />
 </workbook>
 """
 
