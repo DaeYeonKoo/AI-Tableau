@@ -168,8 +168,10 @@ WINDOWS_XML = f"""    <window class='worksheet' name='Test_Sheet'>
 {CARDS_BLOCK}
     </window>
     <window class='dashboard' name='Test_Dashboard2'>
-      <viewpoints />
-      <active id='0' />
+      <viewpoints>
+        <viewpoint name='Test_Sheet' />
+      </viewpoints>
+      <active id='3' />
     </window>"""
 
 WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>

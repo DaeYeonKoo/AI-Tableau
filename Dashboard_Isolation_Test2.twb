@@ -6,15 +6,15 @@
   <preferences />
   <style />
   <datasources>
-    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.7d42e5b9f8a54f43bc48' version='18.1'>
+    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.6646de0b1d794d6eb6b0' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.080ad839d82c42f2a86e'>
+          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.30db3ce7228544778c44'>
             <connection class='textscan' directory='c:/Users/milvus-Tom/.claude/Project/AI-Tableau/data' filename='sl_corporation_quality_claims.csv'
                         password='' server='' />
           </named-connection>
         </named-connections>
-        <relation connection='textscan.080ad839d82c42f2a86e' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
+        <relation connection='textscan.30db3ce7228544778c44' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
         <metadata-records>
         <metadata-record class='column'>
           <remote-name>claim_id</remote-name>
@@ -78,9 +78,9 @@
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.7d42e5b9f8a54f43bc48' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.6646de0b1d794d6eb6b0' />
           </datasources>
-          <datasource-dependencies datasource='federated.7d42e5b9f8a54f43bc48'>
+          <datasource-dependencies datasource='federated.6646de0b1d794d6eb6b0'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column-instance column='[customer]' derivation='None' name='[none:customer:nk]' pivot='key' type='nominal' />
@@ -98,8 +98,8 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.7d42e5b9f8a54f43bc48].[none:customer:nk]</rows>
-        <cols>[federated.7d42e5b9f8a54f43bc48].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.6646de0b1d794d6eb6b0].[none:customer:nk]</rows>
+        <cols>[federated.6646de0b1d794d6eb6b0].[sum:claim_amount_usd:qk]</cols>
       </table>
     </worksheet>
   </worksheets>
@@ -160,8 +160,10 @@
       </cards>
     </window>
     <window class='dashboard' name='Test_Dashboard2'>
-      <viewpoints />
-      <active id='0' />
+      <viewpoints>
+        <viewpoint name='Test_Sheet' />
+      </viewpoints>
+      <active id='3' />
     </window>
   </windows>
 </workbook>
