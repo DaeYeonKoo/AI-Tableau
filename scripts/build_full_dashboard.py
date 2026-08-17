@@ -486,16 +486,20 @@ def build_dashboard(dash_name, sheet_names):
         )
     outer_id = next_zone_id()
     zones_xml = "\n".join(zones_inner)
-    dash_uuid = str(uuid.uuid4()).upper()
     return f"""    <dashboard name='{dash_name}'>
       <style />
       <size sizing-mode='automatic' />
+      <datasources>
+        <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+      </datasources>
       <zones>
         <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
 {zones_xml}
         </zone>
       </zones>
-      <simple-id uuid='{{{dash_uuid}}}' />
+      <devicelayouts>
+        <devicelayout name='Desktop' />
+      </devicelayouts>
     </dashboard>"""
 
 
