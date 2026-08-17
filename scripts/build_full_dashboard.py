@@ -482,46 +482,67 @@ def next_zone_id():
     return _zone_id_counter[0]
 
 
-def build_dashboard(dash_name, sheet_names):
+ZONE_STYLE = """            <zone-style>
+              <format attr='border-color' value='#000000' />
+              <format attr='border-style' value='none' />
+              <format attr='border-width' value='0' />
+              <format attr='margin' value='4' />
+            </zone-style>"""
+
+OUTER_ZONE_STYLE = """          <zone-style>
+            <format attr='border-color' value='#000000' />
+            <format attr='border-style' value='none' />
+            <format attr='border-width' value='0' />
+            <format attr='margin' value='8' />
+          </zone-style>"""
+
+
+def build_zone_tree(sheet_names, id_gen, with_style=True):
+    """워크시트를 담는 zone들 + 그걸 감싸는 layout-basic 컨테이너 zone까지 통째로 생성.
+    실물 파일('대시보드 2')에서 확인된 그대로: 안쪽 zone엔 type-v2 없음, zone마다 zone-style 있음."""
     n = len(sheet_names)
     h_each = 100000 // n
-    zones_inner = []
+    inner_parts = []
     for i, sn in enumerate(sheet_names):
-        zid = next_zone_id()
+        zid = id_gen()
         y = i * h_each
-        zones_inner.append(
-            f"      <zone h='{h_each}' id='{zid}' name='{sn}' type-v2='visual' w='100000' x='0' y='{y}' />"
-        )
-    outer_id = next_zone_id()
-    zones_xml = "\n".join(zones_inner)
-    # 대시보드에 담기는 모든 워크시트가 쓰는 필드의 합집합으로 자체 datasource-dependencies 구성.
-    # 확정된 content model상 datasource-dependencies는 zones보다 먼저 와야 함(§style,size,
-    # datasources,datasource-dependencies*,zones,devicelayouts). 비어 있던 게 2805CF18의
-    # 유력한 원인으로 추정 - 이번 수정의 핵심.
-    union_cis, seen = [], set()
-    for sn in sheet_names:
-        for ci in WORKSHEET_CIS.get(sn, []):
-            if ci["inst_name"] not in seen:
-                seen.add(ci["inst_name"])
-                union_cis.append(ci)
-    deps_xml = datasource_dependencies(union_cis)
-    return f"""    <dashboard name='{dash_name}'>
+        style = "\n" + ZONE_STYLE if with_style else ""
+        inner_parts.append(f"          <zone h='{h_each}' id='{zid}' name='{sn}' w='100000' x='0' y='{y}'>{style}\n          </zone>")
+    outer_id = id_gen()
+    inner_xml = "\n".join(inner_parts)
+    outer_style = "\n" + OUTER_ZONE_STYLE if with_style else ""
+    return f"""        <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
+{inner_xml}{outer_style}
+        </zone>"""
+
+
+def build_dashboard(dash_name, sheet_names):
+    # 실물 확인 사항('대시보드 2', 사용자가 Tableau UI로 직접 만들어 저장한 파일 - 정상 동작 확인됨):
+    #   - <datasources>/<datasource-dependencies>는 대시보드에 아예 없음 (이전 가설이 틀렸음)
+    #   - 워크시트를 담는 zone엔 type-v2가 없음 (이전에 넣었던 'visual'이 틀렸음)
+    #   - <size>는 sizing-mode 없이 명시적 min/max로 지정
+    #   - zone마다 <zone-style> 서식 블록 포함
+    #   - <devicelayouts>에 Phone 레이아웃이 실제 내용(자체 size+zones)으로 채워져 있음
+    #   - <simple-id>는 devicelayouts 뒤에 실제로 존재함 (이전 "금지"라는 판단이 틀렸음)
+    #   - <dashboard enable-sort-zone-taborder='true' ...> 속성 포함
+    desktop_zones = build_zone_tree(sheet_names, next_zone_id, with_style=True)
+    phone_zones = build_zone_tree(sheet_names, next_zone_id, with_style=False)
+    dash_uuid = str(uuid.uuid4()).upper()
+    return f"""    <dashboard enable-sort-zone-taborder='true' name='{dash_name}'>
       <style />
-      <size sizing-mode='automatic' />
-      <datasources>
-        <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
-      </datasources>
-      <datasource-dependencies datasource='{DS_NAME}'>
-{deps_xml}
-      </datasource-dependencies>
+      <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' />
       <zones>
-        <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
-{zones_xml}
-        </zone>
+{desktop_zones}
       </zones>
       <devicelayouts>
-        <devicelayout name='Desktop' />
+        <devicelayout auto-generated='true' name='Phone'>
+          <size maxheight='2200' minheight='2200' sizing-mode='vscroll' />
+          <zones>
+{phone_zones}
+          </zones>
+        </devicelayout>
       </devicelayouts>
+      <simple-id uuid='{{{dash_uuid}}}' />
     </dashboard>"""
 
 
