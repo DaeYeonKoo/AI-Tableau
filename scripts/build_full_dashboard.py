@@ -696,40 +696,15 @@ OUTER_ZONE_STYLE = """          <zone-style>
 
 DASHBOARD_ZONE_IDS = {}  # dash_name -> {sheet_name: zone_id} (desktop 기준) - window의 active/viewpoints에 재사용
 
-# 대시보드 간 이동용 탐색 버튼. 사용자가 Tableau UI로 직접 만들어 저장한 실제 구조를 그대로
-# 재현: type-v2='dashboard-object' zone(<zones>의 최상위 형제, layout-basic 안이 아님) 안에
-# <button action="tabdoc:goto-sheet window-id=...">, action의 window-id는 대상 "대시보드 창"의
-# <simple-id>를 가리킴 - 그래서 대시보드 window마다 미리 GUID를 만들어 두고 버튼/윈도우 양쪽에서
-# 공유한다. <caption>은 Button-Visual-State-CT의 선택 자식으로 2026.2 XSD에 정의돼 있어 스키마상
-# 안전하게 추가(실물 예시엔 캡션이 비어 있었지만, 버튼임을 알아볼 수 있게 대상 대시보드 이름을 넣음).
-DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name in PAGE_LAYOUTS}
-NAV_BUTTON_W = 14000
-NAV_BUTTON_H = 2166
-NAV_BUTTON_Y = 333
-NAV_BUTTON_GAP = 700
-NAV_BUTTON_RIGHT_MARGIN = 571  # 콘텐츠 컨테이너 오른쪽 끝(571+98858=99429)에 맞춤
-
-
-def build_nav_buttons(dash_name, id_gen):
-    others = [n for n in PAGE_LAYOUTS if n != dash_name]
-    n = len(others)
-    total_w = n * NAV_BUTTON_W + (n - 1) * NAV_BUTTON_GAP
-    x_start = 100000 - NAV_BUTTON_RIGHT_MARGIN - total_w
-    parts = []
-    for i, target in enumerate(others):
-        x = x_start + i * (NAV_BUTTON_W + NAV_BUTTON_GAP)
-        zid = id_gen()
-        guid = DASHBOARD_WINDOW_GUIDS[target]
-        parts.append(f"""        <zone h='{NAV_BUTTON_H}' id='{zid}' type-v2='dashboard-object' w='{NAV_BUTTON_W}' x='{x}' y='{NAV_BUTTON_Y}'>
-          <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>
-            <button-visual-state>
-              <caption>{target}</caption>
-              <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
-              <format attr='background-color' value='#16324f' />
-            </button-visual-state>
-          </button>
-        </zone>""")
-    return "\n".join(parts)
+# 탐색 버튼(type-v2='dashboard-object' + <button> zone) 시도는 REAL 2025.3 로드 오류(D2E8DA72,
+# 2025-08-17)로 롤백됨: 사용자가 Tableau UI로 저장한 참고 파일과 동일한 구조를 그대로 반영했지만
+# 실제 신선 로드 시 "element 'button' is not allowed for content model
+# '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'" 로 거부됨 - 즉 Tableau가 저장은
+# 하지만 자기 로더는 거부하는 또 다른 저장/로드 포맷 불일치 사례로 확인. <window class='dashboard'>의
+# <simple-id>도 같은 오류에서 "element 'simple-id' is not allowed for content model
+# '((cards,viewpoint?)|(viewpoints,active,device-preview))'"로 거부됨. 두 기능 모두 실물 검증
+# 없이는 재시도하지 않기로 함(Tableau 구현 가이드.md TODO 참고) - 사용자에게 "참고 파일을 완전히
+# 닫았다가 다시 열어도 정상 로드되는지" 재확인 요청 예정.
 
 
 def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_ids=None):
@@ -809,13 +784,11 @@ def build_dashboard(dash_name, layout_tree):
         </zone>"""
 
     DASHBOARD_ZONE_IDS[dash_name] = sheet_zone_ids
-    nav_zones = build_nav_buttons(dash_name, next_zone_id)
     return f"""    <dashboard name='{dash_name}'>
       <style />
       <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' />
       <zones>
 {desktop_zones}
-{nav_zones}
       </zones>
       <devicelayouts>
         <devicelayout name='Phone'>
@@ -868,14 +841,10 @@ for dn, sheets in PAGE_SHEETS.items():
     zone_ids = DASHBOARD_ZONE_IDS[dn]
     viewpoints_xml = "\n".join(f"        <viewpoint name='{sn}' />" for sn in sheets)
     active_id = zone_ids[sheets[0]]
-    # 탐색 버튼의 action="tabdoc:goto-sheet window-id=..."이 이 대시보드 창을 GUID로 가리키므로,
-    # 실물 참고 예시와 동일하게 대시보드 window에는 simple-id를 부여한다(워크시트/대시보드 "요소"
-    # 자체에 simple-id를 넣으면 로드가 거부됐던 것과는 다른 element - window는 별개의 content model).
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
         f"      <active id='{active_id}' />\n"
-        f"      <simple-id uuid='{DASHBOARD_WINDOW_GUIDS[dn]}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
