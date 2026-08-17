@@ -464,15 +464,44 @@ add("3_LeadTime_Confirm", ws_simple_bar("3_LeadTime_Confirm", "claim_status", "L
 WORKSHEETS_XML = "\n".join(worksheet_blocks)
 
 # ------------------------------------------------------------------
-# 6) 대시보드 3개 (단순 수직 스택 레이아웃, 0~100000 상대 좌표 가정)
+# 6) 대시보드 3개 - 대시보드 기획안.html의 그리드 구조를 가로/세로 컨테이너 트리로 재현.
+#    ('leaf', 워크시트이름) | ('vert'|'horz', [자식 노드...])
 # ------------------------------------------------------------------
-PAGE_SHEETS = {
-    "1. 종합 요약": ["1_KPI", "1_Trend", "1_Map", "1_Top5_Customer", "1_Top5_Defect", "1_Top5_Plant"],
-    "2. 원인 드릴다운": ["2_SM_1", "2_SM_2", "2_SM_3", "2_SM_4", "2_SM_5", "2_Heatmap",
-                    "2_Rank_Category", "2_Rank_DefectCount", "2_CustComposition"],
-    "3. 리드타임 효율": ["3_Status", "3_Cycle_Customer", "3_Cycle_Plant", "3_Severity",
-                    "3_LeadTime_Receive", "3_LeadTime_Confirm"],
+PAGE_LAYOUTS = {
+    "1. 종합 요약": ("vert", [
+        ("leaf", "1_KPI"),
+        ("leaf", "1_Trend"),
+        ("horz", [
+            ("leaf", "1_Map"),
+            ("vert", [("leaf", "1_Top5_Customer"), ("leaf", "1_Top5_Defect"), ("leaf", "1_Top5_Plant")]),
+        ]),
+    ]),
+    "2. 원인 드릴다운": ("vert", [
+        ("horz", [("leaf", f"2_SM_{i}") for i in range(1, 6)]),
+        ("horz", [
+            ("leaf", "2_Heatmap"),
+            ("vert", [("leaf", "2_Rank_Category"), ("leaf", "2_Rank_DefectCount")]),
+        ]),
+        ("leaf", "2_CustComposition"),
+    ]),
+    "3. 리드타임 효율": ("vert", [
+        ("horz", [("leaf", "3_Status"), ("leaf", "3_Severity")]),
+        ("horz", [("leaf", "3_LeadTime_Receive"), ("leaf", "3_LeadTime_Confirm")]),
+        ("horz", [("leaf", "3_Cycle_Customer"), ("leaf", "3_Cycle_Plant")]),
+    ]),
 }
+
+
+def flatten_leaves(node):
+    if node[0] == "leaf":
+        return [node[1]]
+    out = []
+    for child in node[1]:
+        out.extend(flatten_leaves(child))
+    return out
+
+
+PAGE_SHEETS = {name: flatten_leaves(tree) for name, tree in PAGE_LAYOUTS.items()}
 
 _zone_id_counter = [10]
 
@@ -500,45 +529,73 @@ OUTER_ZONE_STYLE = """          <zone-style>
 DASHBOARD_ZONE_IDS = {}  # dash_name -> {sheet_name: zone_id} (desktop 기준) - window의 active/viewpoints에 재사용
 
 
-def build_zone_tree(sheet_names, id_gen, with_style=True, reuse_ids=None):
-    """워크시트를 담는 zone들 + 그걸 감싸는 layout-basic 컨테이너 zone까지 통째로 생성.
-    실물 파일('대시보드 2')에서 확인된 그대로: 안쪽 zone엔 type-v2 없음, zone마다 zone-style 있음.
-    reuse_ids가 주어지면(=phone 레이아웃 생성 시) 워크시트 zone의 id를 desktop과 동일하게 재사용함
-    - 실물 파일에서 동일 워크시트의 desktop/phone zone이 같은 id(3)를 공유하는 게 확인됨.
-    반환: (zone_xml, {sheet_name: zone_id})
+def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_ids=None):
+    """레이아웃 트리를 실제 zone XML로 재귀 변환.
+
+    좌표 체계는 매 depth마다 0~100000으로 리셋되는 게 아니라, 대시보드 전체 캔버스 기준
+    절대 좌표(0~100000)를 계속 이어받는 것으로 실물 파일('대시보드 2')에서 확인됨 - 자식이
+    1개뿐인 컨테이너의 자식 zone이 부모와 완전히 동일한 w/h(98400/98000, 100000이 아님)를
+    가졌던 것이 근거. 그래서 이 함수는 x/y/w/h를 절대값으로 받아 그대로 자식에게 분배한다.
+
+    reuse_ids가 주어지면(phone 레이아웃 생성 시) 워크시트 leaf zone의 id를 desktop과
+    동일하게 재사용 - 실물 파일에서 확인된 패턴. 컨테이너 zone은 desktop/phone 각자 새 id.
     """
-    n = len(sheet_names)
-    h_each = 100000 // n
-    inner_parts = []
-    assigned = {}
-    for i, sn in enumerate(sheet_names):
+    kind = node[0]
+    if kind == "leaf":
+        sn = node[1]
         zid = reuse_ids[sn] if reuse_ids else id_gen()
-        assigned[sn] = zid
-        y = i * h_each
+        sheet_zone_ids[sn] = zid
         style = "\n" + ZONE_STYLE if with_style else ""
-        inner_parts.append(f"          <zone h='{h_each}' id='{zid}' name='{sn}' w='100000' x='0' y='{y}'>{style}\n          </zone>")
-    outer_id = id_gen()
-    inner_xml = "\n".join(inner_parts)
-    outer_style = "\n" + OUTER_ZONE_STYLE if with_style else ""
-    zone_xml = f"""        <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
-{inner_xml}{outer_style}
+        return f"          <zone h='{h}' id='{zid}' name='{sn}' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
+
+    children = node[1]
+    n = len(children)
+    cid = id_gen()
+    parts = []
+    if kind == "vert":
+        ch_h = h // n
+        for i, child in enumerate(children):
+            cy = y + i * ch_h
+            parts.append(render_layout(child, id_gen, with_style, x, cy, w, ch_h, sheet_zone_ids, reuse_ids))
+    else:  # horz
+        ch_w = w // n
+        for i, child in enumerate(children):
+            cx = x + i * ch_w
+            parts.append(render_layout(child, id_gen, with_style, cx, y, ch_w, h, sheet_zone_ids, reuse_ids))
+    inner_xml = "\n".join(parts)
+    style = "\n" + ZONE_STYLE if with_style else ""
+    return f"""        <zone h='{h}' id='{cid}' param='{kind}' type-v2='layout-flow' w='{w}' x='{x}' y='{y}'>
+{inner_xml}{style}
         </zone>"""
-    return zone_xml, assigned
 
 
-def build_dashboard(dash_name, sheet_names):
+def build_dashboard(dash_name, layout_tree):
     # 실물 확인('대시보드 2', 사용자가 Tableau UI로 만들어 저장 - 정상 동작) + 로드 시점 실제
     # 오류(D2E8DA72)를 합쳐서 확정한 구조:
     #   - <datasources>/<datasource-dependencies>는 대시보드에 아예 없음
-    #   - 워크시트를 담는 zone엔 type-v2가 없음
+    #   - 워크시트를 담는 zone엔 type-v2가 없음, 컨테이너 zone엔 type-v2='layout-flow'
+    #     + param='vert'|'horz' (Phone 레이아웃의 실제 예시로 확인됨)
     #   - <size>는 sizing-mode 없이 명시적 min/max로 지정
     #   - zone마다 <zone-style> 서식 블록 포함
     #   - <devicelayouts>에 Phone 레이아웃이 실제 내용(자체 size+zones)으로 채워져 있고,
     #     워크시트 zone은 desktop과 동일 id를 재사용함
     #   - simple-id / enable-sort-zone-taborder / devicelayout의 auto-generated는
-    #     Tableau가 "저장할 때" 쓰는 표기일 뿐, 로드 시엔 허용되지 않아 전부 제외.
-    desktop_zones, sheet_zone_ids = build_zone_tree(sheet_names, next_zone_id, with_style=True)
-    phone_zones, _ = build_zone_tree(sheet_names, next_zone_id, with_style=False, reuse_ids=sheet_zone_ids)
+    #     로드 시엔 허용되지 않아 전부 제외.
+    sheet_zone_ids = {}
+    desktop_inner = render_layout(layout_tree, next_zone_id, True, 0, 0, 100000, 100000, sheet_zone_ids)
+    outer_id = next_zone_id()
+    desktop_zones = f"""        <zone h='100000' id='{outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
+{desktop_inner}
+{OUTER_ZONE_STYLE}
+        </zone>"""
+
+    phone_ids_unused = {}
+    phone_inner = render_layout(layout_tree, next_zone_id, False, 0, 0, 100000, 100000, phone_ids_unused, reuse_ids=sheet_zone_ids)
+    phone_outer_id = next_zone_id()
+    phone_zones = f"""        <zone h='100000' id='{phone_outer_id}' type-v2='layout-basic' w='100000' x='0' y='0'>
+{phone_inner}
+        </zone>"""
+
     DASHBOARD_ZONE_IDS[dash_name] = sheet_zone_ids
     return f"""    <dashboard name='{dash_name}'>
       <style />
@@ -557,7 +614,7 @@ def build_dashboard(dash_name, sheet_names):
     </dashboard>"""
 
 
-DASHBOARDS_XML = "\n".join(build_dashboard(name, sheets) for name, sheets in PAGE_SHEETS.items())
+DASHBOARDS_XML = "\n".join(build_dashboard(name, tree) for name, tree in PAGE_LAYOUTS.items())
 
 # ------------------------------------------------------------------
 # 7) windows (워크시트마다 1개 + 대시보드마다 1개, 동일한 cards 블록 재사용)
