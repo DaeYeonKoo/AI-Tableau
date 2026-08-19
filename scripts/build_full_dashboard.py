@@ -907,7 +907,6 @@ CARD_ZONE_STYLE = """            <zone-style>
               <format attr='border-width' value='1' />
               <format attr='margin' value='4' />
               <format attr='background-color' value='#ffffff' />
-              <format attr='corner-radius' value='10' />
             </zone-style>"""
 
 CARD_HIGHLIGHT_ZONE_STYLE = """            <zone-style>
@@ -916,7 +915,6 @@ CARD_HIGHLIGHT_ZONE_STYLE = """            <zone-style>
               <format attr='border-width' value='1' />
               <format attr='margin' value='4' />
               <format attr='background-color' value='#16324f' />
-              <format attr='corner-radius' value='10' />
             </zone-style>"""
 
 LEAF_ZONE_STYLES = {"card": CARD_ZONE_STYLE, "card-hl": CARD_HIGHLIGHT_ZONE_STYLE}
