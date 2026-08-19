@@ -425,6 +425,7 @@ def common_filter_block(exclude=None):
 NAVY = "#16324f"
 NAVY_2 = "#1f4e79"
 GOOD = "#2a7f62"
+GRAY_BAR = "#c8d3e0"
 STATUS_COLOR_MAP = {"접수": "#d98c1f", "조사중": "#e2a53a", "확정": "#1f4e79", "기각": "#9aa4b2", "보상완료": "#2a7f62"}
 SEVERITY_COLOR_MAP = {"Critical": "#c0392b", "Major": "#d98c1f", "Minor": "#7a8699"}
 
@@ -609,6 +610,75 @@ def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line", mark_color=None):
     </worksheet>"""
 
 
+def ws_dual_axis(name, dim, meas_bar, meas_bar_agg, meas_line, meas_line_agg, bar_color, line_color):
+    """막대(왼쪽 축) + 라인(오른쪽 축) 이중축 콤보 차트. 실물 파일(참고 자료/이중축 예시.twbx,
+    "막대 라인 이중축" 워크시트)에서 확인된 구조 그대로: <rows>에 두 측정값을
+    '(A + B)' 형태로 괄호 묶어 결합하고, <panes>에 기본 pane 1개(mark='Automatic') +
+    각 측정값마다 y-axis-name으로 자신을 가리키는 pane(id='1'=A, id='2'=B, 각각 다른
+    mark class)을 추가. 실물 예시는 색상을 Measure Names 인코딩으로 나눴지만, 우리는
+    막대/라인이 애초에 서로 다른 pane이라 각 pane 자체의 style-rule에 고정 mark-color를
+    거는 것만으로 충분(더 단순하고 검증된 mark-color 패턴 재사용)."""
+    dci = col_instance(dim, "None")
+    bar_ci = col_instance(meas_bar, meas_bar_agg)
+    line_ci = col_instance(meas_line, meas_line_agg)
+    filt_cis, filters_xml, slices_xml = common_filter_block()
+    deps = datasource_dependencies([dci, bar_ci, line_ci] + filt_cis, sheet_name=name)
+    style_block = worksheet_style_block(hide_label_fields=[dci['qualified']])
+    return f"""    <worksheet name='{name}'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+{PARAMETERS_DS_REF}
+          </datasources>
+          <datasource-dependencies datasource='{DS_NAME}'>
+{deps}
+          </datasource-dependencies>
+{PARAMETERS_DEP_BLOCK}
+{filters_xml}
+{slices_xml}
+          <aggregation value='true' />
+        </view>
+{style_block}
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Automatic' />
+            <encodings />
+          </pane>
+          <pane id='1' selection-relaxation-option='selection-relaxation-allow' y-axis-name='{line_ci['qualified']}'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Line' />
+            <encodings />
+            <style>
+              <style-rule element='mark'>
+                <format attr='mark-color' value='{line_color}' />
+              </style-rule>
+            </style>
+          </pane>
+          <pane id='2' selection-relaxation-option='selection-relaxation-allow' y-axis-name='{bar_ci['qualified']}'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Bar' />
+            <encodings />
+            <style>
+              <style-rule element='mark'>
+                <format attr='mark-color' value='{bar_color}' />
+              </style-rule>
+            </style>
+          </pane>
+        </panes>
+        <rows>({line_ci['qualified']} + {bar_ci['qualified']})</rows>
+        <cols>{dci['qualified']}</cols>
+      </table>
+    </worksheet>"""
+
+
 def ws_small_multiple(name, category_value_caption, part_category_literal, meas="claim_amount_usd", mark_color=None):
     """part_category를 필터로 고정한 뒤 월별 트렌드 하나만 보여주는 카드 (5개 반복 생성)."""
     dci = col_instance("OccurrenceMonth", "None")
@@ -761,7 +831,8 @@ add("1_KPI_3M", ws_kpi_text("1_KPI_3M", "KPILast3MCard"))
 add("1_KPI_6M", ws_kpi_text("1_KPI_6M", "KPILast6MCard"))
 add("1_KPI_12M", ws_kpi_text("1_KPI_12M", "KPILast12MCard"))
 add("1_KPI_All", ws_kpi_text("1_KPI_All", "KPIAllCard", mark_color="#ffffff"))
-add("1_Trend", ws_trend("1_Trend", "OccurrenceMonth", "claim_amount_usd", "Sum", mark_color=NAVY))
+add("1_Trend", ws_dual_axis("1_Trend", "OccurrenceMonth", "claim_id", "Count", "claim_amount_usd", "Sum",
+                             bar_color=GRAY_BAR, line_color=NAVY))
 add("1_Map", ws_map("1_Map"))
 add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd", mark_color=NAVY_2))
 add("1_Top5_Defect", ws_simple_bar("1_Top5_Defect", "defect_type_en", "claim_amount_usd", mark_color=NAVY_2))
