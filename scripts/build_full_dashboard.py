@@ -429,16 +429,27 @@ STATUS_COLOR_MAP = {"접수": "#d98c1f", "조사중": "#e2a53a", "확정": "#1f4
 SEVERITY_COLOR_MAP = {"Critical": "#c0392b", "Major": "#d98c1f", "Minor": "#7a8699"}
 
 
-def worksheet_style_block(mark_color=None):
-    """모든 워크시트 공통으로 행/열 필드 머리글을 숨기고(element='header'), 필요하면 단색
-    mark-color를 적용. (카테고리별 커스텀 팔레트는 워크시트가 아니라 데이터소스 레벨 스타일로
-    옮김 - 아래 datasource_color_style_block() 및 그 주석 참고.)"""
+def worksheet_style_block(mark_color=None, hide_label_fields=None):
+    """모든 워크시트 공통으로 행/열 필드 머리글을 숨기고, 필요하면 단색 mark-color를 적용.
+    (카테고리별 커스텀 팔레트는 워크시트가 아니라 데이터소스 레벨 스타일로 옮김 - 아래
+    datasource_color_style_block() 및 그 주석 참고.)
+
+    머리글 숨김은 두 겹으로 건다: element='header' + scope=rows/cols(전역 토글, 예전부터 있었지만
+    실제로는 "Occurrence Month"/"Customer" 같은 필드명 캡션이 계속 남아있는 게 확인됨)과,
+    실물 파일(참고 자료/태블로 예시.twbx, worksheet 'Bunker Price_Header')에서 확인된 진짜
+    메커니즘인 element='label' + field='[qualified]' + attr='display'=false(필드별 개별 토글)를
+    hide_label_fields로 받은 각 필드마다 추가. 후자가 실제로 이 문제를 해결하는 부분."""
     rules = [
         "          <style-rule element='header'>\n"
         "            <format attr='display' scope='rows' value='false' />\n"
         "            <format attr='display' scope='cols' value='false' />\n"
         "          </style-rule>"
     ]
+    if hide_label_fields:
+        label_formats = "\n".join(
+            f"            <format attr='display' field='{f}' value='false' />" for f in hide_label_fields
+        )
+        rules.append(f"          <style-rule element='label'>\n{label_formats}\n          </style-rule>")
     if mark_color:
         rules.append(
             "          <style-rule element='mark'>\n"
@@ -488,7 +499,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
     filt_cis, filters_xml, slices_xml = common_filter_block()
     cis.extend(filt_cis)
     deps = datasource_dependencies(cis, sheet_name=name)
-    style_block = worksheet_style_block(mark_color=mark_color)
+    style_block = worksheet_style_block(mark_color=mark_color, hide_label_fields=[dci['qualified']])
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -527,7 +538,7 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
     mci = col_instance(meas, meas_agg)
     filt_cis, filters_xml, slices_xml = common_filter_block()
     deps = datasource_dependencies([rci, cci, mci] + filt_cis, sheet_name=name)
-    style_block = worksheet_style_block()
+    style_block = worksheet_style_block(hide_label_fields=[rci['qualified'], cci['qualified']])
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -566,7 +577,7 @@ def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line", mark_color=None):
     mci = col_instance(meas, meas_agg)
     filt_cis, filters_xml, slices_xml = common_filter_block()
     deps = datasource_dependencies([dci, mci] + filt_cis, sheet_name=name)
-    style_block = worksheet_style_block(mark_color=mark_color)
+    style_block = worksheet_style_block(mark_color=mark_color, hide_label_fields=[dci['qualified']])
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -607,7 +618,7 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
     # "전체 선택" part_category 필터는 제외(같은 필드에 두 개의 <filter>가 생기는 충돌 방지).
     filt_cis, filters_xml, slices_xml = common_filter_block(exclude={"part_category"})
     deps = datasource_dependencies([dci, mci, fci] + filt_cis, sheet_name=name)
-    style_block = worksheet_style_block(mark_color=mark_color)
+    style_block = worksheet_style_block(mark_color=mark_color, hide_label_fields=[dci['qualified']])
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -642,7 +653,7 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
     </worksheet>"""
 
 
-def ws_kpi_text(name, card_field):
+def ws_kpi_text(name, card_field, mark_color=None):
     """기간별 KPI 카드: 제목/부제/건수/증감률/금액/증감률을 전부 담은 여러 줄 문자열
     계산식(card_field, 예: KPILast1MCard) 하나를 Text 마크 라벨로 표시. 행/열 모두 비워서
     "큰 텍스트 블록" 형태로 렌더링(축 없음)."""
@@ -653,7 +664,7 @@ def ws_kpi_text(name, card_field):
     # (KPI_CARD_DEPS 선언부 주석 참고).
     extra_refs = [field_ref(r) for r in KPI_CARD_DEPS.get(card_field, [])]
     deps = datasource_dependencies(filt_cis + [fci], sheet_name=name, extra_base_refs=extra_refs)
-    style_block = worksheet_style_block()
+    style_block = worksheet_style_block(mark_color=mark_color)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -749,7 +760,7 @@ add("1_KPI_1M", ws_kpi_text("1_KPI_1M", "KPILast1MCard"))
 add("1_KPI_3M", ws_kpi_text("1_KPI_3M", "KPILast3MCard"))
 add("1_KPI_6M", ws_kpi_text("1_KPI_6M", "KPILast6MCard"))
 add("1_KPI_12M", ws_kpi_text("1_KPI_12M", "KPILast12MCard"))
-add("1_KPI_All", ws_kpi_text("1_KPI_All", "KPIAllCard"))
+add("1_KPI_All", ws_kpi_text("1_KPI_All", "KPIAllCard", mark_color="#ffffff"))
 add("1_Trend", ws_trend("1_Trend", "OccurrenceMonth", "claim_amount_usd", "Sum", mark_color=NAVY))
 add("1_Map", ws_map("1_Map"))
 add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd", mark_color=NAVY_2))
@@ -807,8 +818,8 @@ PAGE_CONTENT = {
     "1. 종합 요약": ("vert", [
         W(2, title_row("종합 요약", "1_KPI_1M")),
         W(7, ("horz", [
-            ("leaf", "1_KPI_1M"), ("leaf", "1_KPI_3M"), ("leaf", "1_KPI_6M"),
-            ("leaf", "1_KPI_12M"), ("leaf", "1_KPI_All"),
+            ("leaf", "1_KPI_1M", "card"), ("leaf", "1_KPI_3M", "card"), ("leaf", "1_KPI_6M", "card"),
+            ("leaf", "1_KPI_12M", "card"), ("leaf", "1_KPI_All", "card-hl"),
         ])),
         W(7, ("leaf", "1_Trend")),
         W(12, ("horz", [
@@ -888,6 +899,28 @@ OUTER_ZONE_STYLE = """          <zone-style>
             <format attr='margin' value='8' />
           </zone-style>"""
 
+# 기획안 .kpi-card CSS(흰 배경, 옅은 테두리, 둥근 모서리) 재현 - KPI 카드 5개 중 "전체(3개년)"만
+# .kpi-card.hl(진한 남색 배경)로 강조되는 것도 그대로.
+CARD_ZONE_STYLE = """            <zone-style>
+              <format attr='border-color' value='#e2e6ec' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='4' />
+              <format attr='background-color' value='#ffffff' />
+              <format attr='corner-radius' value='10' />
+            </zone-style>"""
+
+CARD_HIGHLIGHT_ZONE_STYLE = """            <zone-style>
+              <format attr='border-color' value='#16324f' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='4' />
+              <format attr='background-color' value='#16324f' />
+              <format attr='corner-radius' value='10' />
+            </zone-style>"""
+
+LEAF_ZONE_STYLES = {"card": CARD_ZONE_STYLE, "card-hl": CARD_HIGHLIGHT_ZONE_STYLE}
+
 
 DASHBOARD_ZONE_IDS = {}  # dash_name -> {sheet_name: zone_id} (desktop 기준) - window의 active/viewpoints에 재사용
 
@@ -937,9 +970,11 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
     kind = node[0]
     if kind == "leaf":
         sn = node[1]
+        variant = node[2] if len(node) > 2 else None
         zid = reuse_ids[sn] if reuse_ids else id_gen()
         sheet_zone_ids[sn] = zid
-        style = "\n" + ZONE_STYLE if with_style else ""
+        zone_style_xml = LEAF_ZONE_STYLES.get(variant, ZONE_STYLE)
+        style = "\n" + zone_style_xml if with_style else ""
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' name='{sn}' show-title='false' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "text":
