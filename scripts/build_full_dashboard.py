@@ -190,6 +190,18 @@ _all_card_formula = (
 )
 CALC_FIELDS.append(("KPIAllCard", "KPI All Card", "string", "measure", "nominal", _all_card_formula))
 
+# 각 KPI Card 필드가 자기 수식 안에서 SUM()으로 "참조만" 하고 어떤 shelf에도 직접 올리지 않는
+# 계산 필드들. 실제로 마크에 이 Card 필드를 올렸을 때 "계산에 오류 있음"(빨간 파란색 필드
+# 표시)이 났던 원인으로 확인됨 - 워크시트의 datasource-dependencies에 이 하위 필드들의
+# <column> 선언이 전혀 없었음(Card 필드 자기 자신만 선언돼 있었음). Tableau는 워크시트 뷰가
+# 실제로 의존하는 모든 필드(수식으로만 참조하는 것 포함)를 그 뷰의 dependencies에 나열해야
+# 제대로 평가하는 것으로 확인 - column-instance는 필요 없고 base <column> 선언만 있으면 됨.
+KPI_CARD_DEPS = {
+    f"KPI{pname}Card": [f"KPI{pname}Count", f"KPI{pname}PrevCount", f"KPI{pname}Amount", f"KPI{pname}PrevAmount"]
+    for pname, *_ in KPI_PERIODS
+}
+KPI_CARD_DEPS["KPIAllCard"] = ["claim_id", "claim_amount_usd"]
+
 # 필드 레지스트리: name -> (datatype, role, type)  (raw + calc 통합)
 FIELD_TYPES = {name: (dtype, role, ftype) for name, dtype, role, ftype in COLUMNS}
 for internal, caption, dtype, role, ftype, formula in CALC_FIELDS:
@@ -303,11 +315,14 @@ def instance_xml(ci):
 WORKSHEET_CIS = {}  # worksheet name -> cis 리스트 (대시보드의 datasource-dependencies 합치는 데 재사용)
 
 
-def datasource_dependencies(cis, sheet_name=None):
+def datasource_dependencies(cis, sheet_name=None, extra_base_refs=None):
     """cis: col_instance() 결과 리스트. 중복 없이 base column + column-instance 블록 생성.
     sheet_name을 주면 WORKSHEET_CIS에 등록해서, 이 워크시트를 담는 대시보드가 자기 자신의
     datasource-dependencies를 만들 때 재사용할 수 있게 함 (2805CF18 원인으로 추정되는,
-    대시보드에 datasource-dependencies가 비어있던 문제 대응)."""
+    대시보드에 datasource-dependencies가 비어있던 문제 대응).
+    extra_base_refs: 어떤 shelf에도 직접 올라가지 않고 다른 계산식 안에서 수식으로만
+    참조되는 필드(예: KPI Card가 SUM()으로 참조하는 하위 Count/Amount 계산식들) - column-instance
+    없이 base <column> 선언만 추가한다."""
     if sheet_name is not None:
         WORKSHEET_CIS[sheet_name] = cis
     seen_base, seen_inst = set(), set()
@@ -319,6 +334,10 @@ def datasource_dependencies(cis, sheet_name=None):
         if ci["inst_name"] not in seen_inst:
             seen_inst.add(ci["inst_name"])
             inst_parts.append(instance_xml(ci))
+    for ref in (extra_base_refs or []):
+        if ref not in seen_base:
+            seen_base.add(ref)
+            base_parts.append(base_column_xml(ref))
     return "\n".join(base_parts + inst_parts)
 
 
@@ -532,10 +551,11 @@ def ws_kpi_text(name, card_field):
     "큰 텍스트 블록" 형태로 렌더링(축 없음)."""
     fci = col_instance(card_field, "None")
     filt_cis, filters_xml, slices_xml = common_filter_block()
-    # 마크(Text)가 실제로 쓰는 카드 필드를 datasource-dependencies의 맨 마지막에 선언 -
-    # 사용자가 Tableau UI에서 "계산 필드를 뺐다가 다시 넣으니" 빨간 오류 표시가 해소된 것과
-    # 최대한 비슷한 상태(그 필드가 "가장 최근에 추가된" 위치)를 재현하기 위한 시도.
-    deps = datasource_dependencies(filt_cis + [fci], sheet_name=name)
+    # 카드 필드가 SUM()으로 참조만 하는 하위 계산식(Count/PrevCount/Amount/PrevAmount 등)도
+    # 이 워크시트의 datasource-dependencies에 명시적으로 선언 - 실제 오류 원인이었음
+    # (KPI_CARD_DEPS 선언부 주석 참고).
+    extra_refs = [field_ref(r) for r in KPI_CARD_DEPS.get(card_field, [])]
+    deps = datasource_dependencies(filt_cis + [fci], sheet_name=name, extra_base_refs=extra_refs)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
