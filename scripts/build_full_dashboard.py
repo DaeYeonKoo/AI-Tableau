@@ -1,15 +1,39 @@
 # -*- coding: utf-8 -*-
 """
-전체 3페이지 대시보드 .twb 생성 스크립트 (검증 없이 바로 시도하는 버전).
+SL_Corporation_Quality_Claims.twb 생성 스크립트 (Tableau Desktop 2025.3 대상).
 
-전제: rows/cols 필드 주소 문법(column-instance)이 아직 실물로 검증되지 않았음.
-1차 실패(9CA7205B)의 원인으로 "column-instance를 datasource-dependencies에 선언하지
-않고 바로 참조한 것"으로 추정 - 이번엔 사용하는 모든 필드마다 column-instance를 명시적으로
-선언한다. 그래도 파일이 열리지 않을 가능성을 사용자에게 명확히 알릴 것.
+'대시보드 기획안.html'의 3페이지 대시보드를 실제 Tableau .twb XML로 재현한다. 데이터소스(24개
+원본 컬럼 + CSV 연결) + 계산 필드(리드타임/사이클타임/KPI 카드 등) + 워크시트 25개 + 대시보드
+3개 + 상단 필터 박스(차원 필터 + 날짜 매개변수) + 기획안과 동일한 색상 팔레트로 구성된다.
 
-구성: 데이터소스(24개 원본 컬럼 + 계산식 6개) + 워크시트 17개 + 대시보드 3개.
-일부 컴포넌트(KPI 5기간 카드, 이중축 콤보차트, 진짜 히스토그램, 세계지도)는
-1차 시도 리스크를 낮추기 위해 단순화했음 - 하단 주석 참고.
+아래는 이 파일의 각 섹션이 실제로 어떤 Tableau 기능을 만들어내는지 한눈에 보기 위한 지도.
+섹션 번호는 파일 안의 "# N)" 주석과 대응한다.
+
+  1)   COLUMNS / REMOTE_TYPE / build_metadata_records   -> 데이터소스: CSV 연결 + 원본 필드 24개
+  1-1) PARAM_DEFS / build_parameters_datasource          -> 상단 필터 박스의 매개변수(Parameters
+                                                             데이터소스, 시작일/종료일)
+  2)   CALC_FIELDS / KPI_PERIODS / cond_calc / *_expr    -> 계산된 필드: 리드타임, 사이클타임,
+       함수들 / KPI_CARD_DEPS                               상태 플래그, KPI 카드 5개(제목/부제/
+                                                             건수/증감률/금액/증감률 문자열)
+  3)   col_instance / instance_xml / field_ref /         -> rows/cols/filter/encodings가 참조하는
+       datasource_dependencies                              column-instance 배선 (qualified 이름,
+                                                             derivation='None'|'Sum'|...|'User')
+  3-1) FILTER_DIMS / common_filter_block                 -> 대시보드 상단 필터 박스: 고객사/생산
+                                                             공장/부품카테고리 차원 필터 + 날짜범위
+                                                             필터(매개변수 기반 계산 필드)
+  3-2) NAVY 등 색상 상수 / worksheet_style_block /       -> 기획안과 동일한 색상 적용 + 워크시트
+       datasource_color_style_block                         제목·머리글 숨김 (mark-color 단색,
+                                                             claim_status/severity 카테고리 팔레트)
+  4)   ws_simple_bar / ws_heatmap / ws_trend /           -> 워크시트 종류별 빌더(막대, 히트맵,
+       ws_small_multiple / ws_kpi_text / ws_map              트렌드, 소형멀티플, KPI 텍스트 카드, 지도)
+  5)   add(...) 호출들                                   -> 워크시트 25개 실제 등록(필드/색상 지정)
+  6)   PAGE_LAYOUTS / render_layout / build_dashboard    -> 대시보드 화면 배치: 세로/가로 컨테이너
+                                                             트리 -> 절대좌표 zone(type-v2=
+                                                             'layout-basic') + Phone 디바이스 레이아웃
+  7)   CARDS_BLOCK / window_blocks                       -> 워크시트/대시보드 "창(window)" 상태
+                                                             (활성 zone, viewpoints, 전체 보기 줌)
+  8)   WORKBOOK 최종 조립                                -> 전체 XML 합치기 + 2026.2 XSD 참고 검증
+                                                             (2025.3 전용 항목은 알려진 차이로 무시)
 """
 import os
 import uuid
@@ -859,11 +883,7 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_id
         zid = reuse_ids[sn] if reuse_ids else id_gen()
         sheet_zone_ids[sn] = zid
         style = "\n" + ZONE_STYLE if with_style else ""
-        # layout-cache type-h/type-w='fixed' - 없으면 Tableau가 콘텐츠 기준으로 각 zone 크기를
-        # 자체적으로 재계산해서 일부는 너무 크고 일부는 너무 작아지는 문제가 있었음(사용자 확인).
-        # 이 값을 넣어 zone-tree에서 계산한 비율(h/w)을 그대로 존중하도록 강제.
-        layout_cache = "\n            <layout-cache type-h='fixed' type-w='fixed' />" if with_style else ""
-        return f"          <zone h='{h}' id='{zid}' name='{sn}' show-title='false' w='{w}' x='{x}' y='{y}'>{layout_cache}{style}\n          </zone>"
+        return f"          <zone h='{h}' id='{zid}' name='{sn}' show-title='false' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "text":
         text, fontsize, color = node[1], node[2], node[3]
@@ -890,7 +910,13 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_id
             pos += ch_w
     inner_xml = "\n".join(parts)
     style = "\n" + ZONE_STYLE if with_style else ""
-    return f"""        <zone h='{h}' id='{cid}' param='{kind}' type-v2='layout-flow' w='{w}' x='{x}' y='{y}'>
+    # type-v2='layout-basic' (param 없음) - 최상위 root zone에 쓰던 것과 동일한 "절대좌표 고정"
+    # 컨테이너 타입을 중첩 컨테이너에도 그대로 사용. 원래는 type-v2='layout-flow' + param='vert'|
+    # 'horz'(자동 흐름/반응형 컨테이너)를 썼는데, 이게 실제로는 zone-tree에 적어둔 h/w 비율을
+    # 무시하고 Tableau가 내용 기준으로 각 zone 크기를 자체 재계산하는 원인이었음(사용자가 실제
+    # 화면에서 확인 - KPI 카드는 다 찌그러지고 트렌드 차트가 화면 전체를 차지). layout-basic은
+    # 항상 x/y/w/h를 있는 그대로 존중하는 절대 배치 모드라 크기가 고정됨.
+    return f"""        <zone h='{h}' id='{cid}' type-v2='layout-basic' w='{w}' x='{x}' y='{y}'>
 {inner_xml}{style}
         </zone>"""
 
