@@ -395,9 +395,63 @@ def common_filter_block(exclude=None):
 
 
 # ------------------------------------------------------------------
+# 3-2) 대시보드 기획안.html에 실제로 쓰인 색상값 그대로 이식 (JS 상수 STATUS_COLOR/SEV_COLOR,
+# drawRankBars 기본색 #1f4e79, 트렌드 라인 #16324f, 리드타임 히스토그램 색 등을 그대로 읽어옴).
+# ------------------------------------------------------------------
+NAVY = "#16324f"
+NAVY_2 = "#1f4e79"
+GOOD = "#2a7f62"
+STATUS_COLOR_MAP = {"접수": "#d98c1f", "조사중": "#e2a53a", "확정": "#1f4e79", "기각": "#9aa4b2", "보상완료": "#2a7f62"}
+SEVERITY_COLOR_MAP = {"Critical": "#c0392b", "Major": "#d98c1f", "Minor": "#7a8699"}
+
+
+def worksheet_style_block(mark_color=None):
+    """모든 워크시트 공통으로 행/열 필드 머리글을 숨기고(element='header'), 필요하면 단색
+    mark-color를 적용. (카테고리별 커스텀 팔레트는 워크시트가 아니라 데이터소스 레벨 스타일로
+    옮김 - 아래 datasource_color_style_block() 및 그 주석 참고.)"""
+    rules = [
+        "          <style-rule element='header'>\n"
+        "            <format attr='display' scope='rows' value='false' />\n"
+        "            <format attr='display' scope='cols' value='false' />\n"
+        "          </style-rule>"
+    ]
+    if mark_color:
+        rules.append(
+            "          <style-rule element='mark'>\n"
+            f"            <format attr='mark-color' value='{mark_color}' />\n"
+            "          </style-rule>"
+        )
+    return "        <style>\n" + "\n".join(rules) + "\n        </style>"
+
+
+def datasource_color_style_block():
+    """카테고리 값별 커스텀 색상(예: severity Critical=빨강)은 워크시트가 아니라 데이터소스의
+    <style><style-rule element='mark'><encoding attr='color' field='[none:필드:nk]'
+    type='palette'><map to='#hex'><bucket>&quot;값&quot;</bucket></map>...</encoding></style-rule>
+    구조로 선언되는 것을 실제 공개 .twb 예시(berkayalan/Tableau-Tutorials, Section2.twb의
+    Region 필드 색상 지정부)로 확인 - 대시보드 기획안.html의 STATUS_COLOR/SEV_COLOR 값을 그대로
+    이식. field= 값은 워크시트 shelf 참조와 달리 데이터소스 접두사 없는 bare 형태."""
+    def one_rule(field_name, color_map):
+        cci = col_instance(field_name, "None")
+        maps = "\n".join(
+            f"            <map to='{hexval}'>\n              <bucket>&quot;{value}&quot;</bucket>\n            </map>"
+            for value, hexval in color_map.items()
+        )
+        return (
+            "        <style-rule element='mark'>\n"
+            f"          <encoding attr='color' field='{cci['inst_name']}' type='palette'>\n"
+            f"{maps}\n"
+            "          </encoding>\n"
+            "        </style-rule>"
+        )
+    rules = [one_rule("claim_status", STATUS_COLOR_MAP), one_rule("severity", SEVERITY_COLOR_MAP)]
+    return "      <style>\n" + "\n".join(rules) + "\n      </style>"
+
+
+# ------------------------------------------------------------------
 # 4) 워크시트 빌더
 # ------------------------------------------------------------------
-def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar"):
+def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", mark_color=None):
     """행=차원, 열=집계측정값 가로 막대 (가장 흔한 패턴)."""
     dci = col_instance(dim, "None")
     mci = col_instance(meas, meas_agg)
@@ -410,6 +464,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar"):
     filt_cis, filters_xml, slices_xml = common_filter_block()
     cis.extend(filt_cis)
     deps = datasource_dependencies(cis, sheet_name=name)
+    style_block = worksheet_style_block(mark_color=mark_color)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -425,7 +480,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar"):
 {slices_xml}
           <aggregation value='true' />
         </view>
-        <style />
+{style_block}
         <panes>
           <pane selection-relaxation-option='selection-relaxation-allow'>
             <view>
@@ -448,6 +503,7 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
     mci = col_instance(meas, meas_agg)
     filt_cis, filters_xml, slices_xml = common_filter_block()
     deps = datasource_dependencies([rci, cci, mci] + filt_cis, sheet_name=name)
+    style_block = worksheet_style_block()
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -463,7 +519,7 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
 {slices_xml}
           <aggregation value='true' />
         </view>
-        <style />
+{style_block}
         <panes>
           <pane selection-relaxation-option='selection-relaxation-allow'>
             <view>
@@ -481,11 +537,12 @@ def ws_heatmap(name, dim_row, dim_col, meas, meas_agg="Count"):
     </worksheet>"""
 
 
-def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line"):
+def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line", mark_color=None):
     dci = col_instance(dim, "None")
     mci = col_instance(meas, meas_agg)
     filt_cis, filters_xml, slices_xml = common_filter_block()
     deps = datasource_dependencies([dci, mci] + filt_cis, sheet_name=name)
+    style_block = worksheet_style_block(mark_color=mark_color)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -501,7 +558,7 @@ def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line"):
 {slices_xml}
           <aggregation value='true' />
         </view>
-        <style />
+{style_block}
         <panes>
           <pane selection-relaxation-option='selection-relaxation-allow'>
             <view>
@@ -517,7 +574,7 @@ def ws_trend(name, dim, meas, meas_agg="Sum", mark="Line"):
     </worksheet>"""
 
 
-def ws_small_multiple(name, category_value_caption, part_category_literal, meas="claim_amount_usd"):
+def ws_small_multiple(name, category_value_caption, part_category_literal, meas="claim_amount_usd", mark_color=None):
     """part_category를 필터로 고정한 뒤 월별 트렌드 하나만 보여주는 카드 (5개 반복 생성)."""
     dci = col_instance("OccurrenceMonth", "None")
     mci = col_instance(meas, "Sum")
@@ -526,6 +583,7 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
     # "전체 선택" part_category 필터는 제외(같은 필드에 두 개의 <filter>가 생기는 충돌 방지).
     filt_cis, filters_xml, slices_xml = common_filter_block(exclude={"part_category"})
     deps = datasource_dependencies([dci, mci, fci] + filt_cis, sheet_name=name)
+    style_block = worksheet_style_block(mark_color=mark_color)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -544,7 +602,7 @@ def ws_small_multiple(name, category_value_caption, part_category_literal, meas=
 {slices_xml}
           <aggregation value='true' />
         </view>
-        <style />
+{style_block}
         <panes>
           <pane selection-relaxation-option='selection-relaxation-allow'>
             <view>
@@ -571,6 +629,7 @@ def ws_kpi_text(name, card_field):
     # (KPI_CARD_DEPS 선언부 주석 참고).
     extra_refs = [field_ref(r) for r in KPI_CARD_DEPS.get(card_field, [])]
     deps = datasource_dependencies(filt_cis + [fci], sheet_name=name, extra_base_refs=extra_refs)
+    style_block = worksheet_style_block()
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -586,7 +645,7 @@ def ws_kpi_text(name, card_field):
 {slices_xml}
           <aggregation value='true' />
         </view>
-        <style />
+{style_block}
         <panes>
           <pane selection-relaxation-option='selection-relaxation-allow'>
             <view>
@@ -612,6 +671,7 @@ def ws_map(name):
     mci = col_instance("claim_amount_usd", "Sum")
     filt_cis, filters_xml, slices_xml = common_filter_block()
     deps = datasource_dependencies([lat, lon, ctry, mci] + filt_cis, sheet_name=name)
+    style_block = worksheet_style_block(mark_color=NAVY_2)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -627,7 +687,7 @@ def ws_map(name):
 {slices_xml}
           <aggregation value='true' />
         </view>
-        <style />
+{style_block}
         <panes>
           <pane selection-relaxation-option='selection-relaxation-allow'>
             <view>
@@ -666,27 +726,27 @@ add("1_KPI_3M", ws_kpi_text("1_KPI_3M", "KPILast3MCard"))
 add("1_KPI_6M", ws_kpi_text("1_KPI_6M", "KPILast6MCard"))
 add("1_KPI_12M", ws_kpi_text("1_KPI_12M", "KPILast12MCard"))
 add("1_KPI_All", ws_kpi_text("1_KPI_All", "KPIAllCard"))
-add("1_Trend", ws_trend("1_Trend", "OccurrenceMonth", "claim_amount_usd", "Sum"))
+add("1_Trend", ws_trend("1_Trend", "OccurrenceMonth", "claim_amount_usd", "Sum", mark_color=NAVY))
 add("1_Map", ws_map("1_Map"))
-add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd"))
-add("1_Top5_Defect", ws_simple_bar("1_Top5_Defect", "defect_type_en", "claim_amount_usd"))
-add("1_Top5_Plant", ws_simple_bar("1_Top5_Plant", "production_plant", "claim_amount_usd"))
+add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd", mark_color=NAVY_2))
+add("1_Top5_Defect", ws_simple_bar("1_Top5_Defect", "defect_type_en", "claim_amount_usd", mark_color=NAVY_2))
+add("1_Top5_Plant", ws_simple_bar("1_Top5_Plant", "production_plant", "claim_amount_usd", mark_color=NAVY_2))
 
 # Page 2
 for i, cat in enumerate(CATEGORIES, start=1):
-    add(f"2_SM_{i}", ws_small_multiple(f"2_SM_{i}", cat, cat))
+    add(f"2_SM_{i}", ws_small_multiple(f"2_SM_{i}", cat, cat, mark_color=NAVY_2))
 add("2_Heatmap", ws_heatmap("2_Heatmap", "production_plant", "defect_type_en", "claim_id", "Count"))
-add("2_Rank_Category", ws_simple_bar("2_Rank_Category", "part_category", "claim_amount_usd"))
-add("2_Rank_DefectCount", ws_simple_bar("2_Rank_DefectCount", "defect_type_en", "claim_id", "Count"))
-add("2_CustComposition", ws_simple_bar("2_CustComposition", "customer", "claim_amount_usd"))
+add("2_Rank_Category", ws_simple_bar("2_Rank_Category", "part_category", "claim_amount_usd", mark_color=NAVY_2))
+add("2_Rank_DefectCount", ws_simple_bar("2_Rank_DefectCount", "defect_type_en", "claim_id", "Count", mark_color=NAVY_2))
+add("2_CustComposition", ws_simple_bar("2_CustComposition", "customer", "claim_amount_usd", mark_color=NAVY_2))
 
 # Page 3
-add("3_Status", ws_simple_bar("3_Status", "claim_status", "claim_id", "Count"))
-add("3_Cycle_Customer", ws_simple_bar("3_Cycle_Customer", "customer", "TotalCycleTime", "Avg"))
-add("3_Cycle_Plant", ws_simple_bar("3_Cycle_Plant", "production_plant", "TotalCycleTime", "Avg"))
+add("3_Status", ws_simple_bar("3_Status", "claim_status", "claim_id", "Count", color_dim="claim_status"))
+add("3_Cycle_Customer", ws_simple_bar("3_Cycle_Customer", "customer", "TotalCycleTime", "Avg", mark_color=NAVY_2))
+add("3_Cycle_Plant", ws_simple_bar("3_Cycle_Plant", "production_plant", "TotalCycleTime", "Avg", mark_color=NAVY_2))
 add("3_Severity", ws_simple_bar("3_Severity", "severity", "claim_amount_usd", "Sum", color_dim="severity"))
-add("3_LeadTime_Receive", ws_simple_bar("3_LeadTime_Receive", "claim_status", "LeadTimeToReceive", "Avg"))
-add("3_LeadTime_Confirm", ws_simple_bar("3_LeadTime_Confirm", "claim_status", "LeadTimeToConfirm", "Avg"))
+add("3_LeadTime_Receive", ws_simple_bar("3_LeadTime_Receive", "claim_status", "LeadTimeToReceive", "Avg", mark_color=NAVY_2))
+add("3_LeadTime_Confirm", ws_simple_bar("3_LeadTime_Confirm", "claim_status", "LeadTimeToConfirm", "Avg", mark_color=GOOD))
 
 WORKSHEETS_XML = "\n".join(worksheet_blocks)
 
@@ -799,7 +859,11 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_id
         zid = reuse_ids[sn] if reuse_ids else id_gen()
         sheet_zone_ids[sn] = zid
         style = "\n" + ZONE_STYLE if with_style else ""
-        return f"          <zone h='{h}' id='{zid}' name='{sn}' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
+        # layout-cache type-h/type-w='fixed' - 없으면 Tableau가 콘텐츠 기준으로 각 zone 크기를
+        # 자체적으로 재계산해서 일부는 너무 크고 일부는 너무 작아지는 문제가 있었음(사용자 확인).
+        # 이 값을 넣어 zone-tree에서 계산한 비율(h/w)을 그대로 존중하도록 강제.
+        layout_cache = "\n            <layout-cache type-h='fixed' type-w='fixed' />" if with_style else ""
+        return f"          <zone h='{h}' id='{zid}' name='{sn}' show-title='false' w='{w}' x='{x}' y='{y}'>{layout_cache}{style}\n          </zone>"
 
     if kind == "text":
         text, fontsize, color = node[1], node[2], node[3]
@@ -960,6 +1024,7 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
       </connection>
       <aliases enabled='yes' />
 {BASE_COLUMNS_XML}
+{datasource_color_style_block()}
     </datasource>
 {build_parameters_datasource()}
   </datasources>
