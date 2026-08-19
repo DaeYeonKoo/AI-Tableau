@@ -804,27 +804,38 @@ def captioned(caption, node, cap_h=1, body_h=9):
     return ("vert", [W(cap_h, ("text", caption, 13, TITLE_COLOR)), W(body_h, node)])
 
 
-def title_row(text, owner_ws):
-    """제목 + 필터 박스(고객사/생산공장/부품카테고리 드롭다운 + 시작일/종료일)를 한 줄에 배치.
-    필터 드롭다운은 실물 파일(참고 자료/필터 예시.twbx, "Reset filter sample")에서 확인된
-    type='filter' mode='checkdropdown' 구조를 그대로 재현(아래 filterctrl 분기 참고).
+def title_row(text):
+    """맨 위 제목 줄 - 기획안처럼 제목(왼쪽) + '기준일' 표시(오른쪽)만. 필터 박스는 별도
+    행(filter_row)으로 그 아래에 배치 - 기획안 레이아웃이 제목 줄과 필터 줄을 분리해서
+    보여주는 것과 동일한 구조로 맞춤."""
+    return ("horz", [
+        W(20, ("text", text, 22, TITLE_COLOR)),
+        W(6, ("text", "기준일 2025-12-31", 11, "#7c8494")),
+    ])
+
+
+def filter_row(owner_ws):
+    """필터 박스: 고객사/생산공장/부품카테고리 드롭다운 + 시작일/종료일. 필터 드롭다운은
+    실물 파일(참고 자료/필터 예시.twbx, "Reset filter sample")에서 확인된 type='filter'
+    mode='checkdropdown' 구조를 그대로 재현(아래 filterctrl 분기 참고).
     owner_ws: 이 필터를 "소유"하는 워크시트 이름 - 그 대시보드에 실제로 배치된 워크시트여야
     하고(필터 zone의 name= 속성), 이미 모든 워크시트가 동일한 customer/production_plant/
     part_category 필터를 갖고 있어(common_filter_block) 어떤 워크시트를 골라도 됨."""
     return ("horz", [
-        W(14, ("text", text, 22, TITLE_COLOR)),
         W(6, ("filterctrl", "customer", owner_ws)),
         W(6, ("filterctrl", "production_plant", owner_ws)),
         W(6, ("filterctrl", "part_category", owner_ws)),
         W(4, ("paramctrl", "Parameter 1", "시작일", "datetime")),
         W(4, ("paramctrl", "Parameter 2", "종료일", "datetime")),
+        W(10, ("empty",)),
     ])
 
 
 PAGE_CONTENT = {
     "1. 종합 요약": ("vert", [
-        W(2, title_row("종합 요약", "1_KPI_1M")),
-        W(7, ("horz", [
+        W(2, title_row("종합 요약")),
+        W(2, filter_row("1_KPI_1M")),
+        W(5, ("horz", [
             ("leaf", "1_KPI_1M", "card"), ("leaf", "1_KPI_3M", "card"), ("leaf", "1_KPI_6M", "card"),
             ("leaf", "1_KPI_12M", "card"), ("leaf", "1_KPI_All", "card-hl"),
         ])),
@@ -839,7 +850,8 @@ PAGE_CONTENT = {
         ])),
     ]),
     "2. 원인 드릴다운": ("vert", [
-        W(2, title_row("원인 드릴다운", "2_SM_1")),
+        W(2, title_row("원인 드릴다운")),
+        W(2, filter_row("2_SM_1")),
         W(8, ("horz", [captioned(cat, ("leaf", f"2_SM_{i}")) for i, cat in enumerate(CATEGORIES, start=1)])),
         W(12, ("horz", [
             captioned("생산공장 × 불량유형 히트맵", ("leaf", "2_Heatmap")),
@@ -851,7 +863,8 @@ PAGE_CONTENT = {
         W(6, captioned("고객사별 구성비", ("leaf", "2_CustComposition"))),
     ]),
     "3. 리드타임 효율": ("vert", [
-        W(2, title_row("리드타임 · 효율", "3_Status")),
+        W(2, title_row("리드타임 · 효율")),
+        W(2, filter_row("3_Status")),
         W(9, ("horz", [captioned("클레임 상태", ("leaf", "3_Status")), captioned("심각도", ("leaf", "3_Severity"))])),
         W(9, ("horz", [
             captioned("리드타임 분포 — 발생 → 접수", ("leaf", "3_LeadTime_Receive")),
@@ -1217,7 +1230,11 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
           xmlns:user='http://www.tableausoftware.com/xml/user'>
   <document-format-change-manifest />
   <preferences />
-  <style />
+  <style>
+    <style-rule element='all'>
+      <format attr='font-family' value='Noto Sans KR' />
+    </style-rule>
+  </style>
   <datasources>
     <datasource caption='sl_corporation_quality_claims' inline='true' name='{DS_NAME}' version='18.1'>
       <connection class='federated'>
