@@ -785,9 +785,20 @@ def W(weight, node):
 
 TITLE_COLOR = "#16324F"
 
+
+def title_row(text):
+    """제목 + 시작일/종료일 매개변수 컨트롤(paramctrl)을 한 줄에 배치.
+    실물 파일(참고 자료/태블로 예시.twbx)에서 확인된 실제 paramctrl 구조 사용."""
+    return ("horz", [
+        W(20, ("text", text, 24, TITLE_COLOR)),
+        W(4, ("paramctrl", "Parameter 1", "시작일", "datetime")),
+        W(4, ("paramctrl", "Parameter 2", "종료일", "datetime")),
+    ])
+
+
 PAGE_LAYOUTS = {
     "1. 종합 요약": ("vert", [
-        W(2, ("text", "종합 요약", 24, TITLE_COLOR)),
+        W(2, title_row("종합 요약")),
         W(7, ("horz", [
             ("leaf", "1_KPI_1M"), ("leaf", "1_KPI_3M"), ("leaf", "1_KPI_6M"),
             ("leaf", "1_KPI_12M"), ("leaf", "1_KPI_All"),
@@ -799,7 +810,7 @@ PAGE_LAYOUTS = {
         ])),
     ]),
     "2. 원인 드릴다운": ("vert", [
-        W(2, ("text", "원인 드릴다운", 24, TITLE_COLOR)),
+        W(2, title_row("원인 드릴다운")),
         W(8, ("horz", [("leaf", f"2_SM_{i}") for i in range(1, 6)])),
         W(12, ("horz", [
             ("leaf", "2_Heatmap"),
@@ -808,7 +819,7 @@ PAGE_LAYOUTS = {
         W(6, ("leaf", "2_CustComposition")),
     ]),
     "3. 리드타임 효율": ("vert", [
-        W(2, ("text", "리드타임 · 효율", 24, TITLE_COLOR)),
+        W(2, title_row("리드타임 · 효율")),
         W(9, ("horz", [("leaf", "3_Status"), ("leaf", "3_Severity")])),
         W(9, ("horz", [("leaf", "3_LeadTime_Receive"), ("leaf", "3_LeadTime_Confirm")])),
         W(9, ("horz", [("leaf", "3_Cycle_Customer"), ("leaf", "3_Cycle_Plant")])),
@@ -819,7 +830,7 @@ PAGE_LAYOUTS = {
 def flatten_leaves(node):
     if node[0] == "leaf":
         return [node[1]]
-    if node[0] == "text":
+    if node[0] in ("text", "paramctrl"):
         return []
     out = []
     for child in node[1]:
@@ -855,18 +866,29 @@ OUTER_ZONE_STYLE = """          <zone-style>
 
 DASHBOARD_ZONE_IDS = {}  # dash_name -> {sheet_name: zone_id} (desktop 기준) - window의 active/viewpoints에 재사용
 
-# 탐색 버튼(type-v2='dashboard-object' + <button> zone) 시도는 REAL 2025.3 로드 오류(D2E8DA72,
-# 2025-08-17)로 롤백됨: 사용자가 Tableau UI로 저장한 참고 파일과 동일한 구조를 그대로 반영했지만
-# 실제 신선 로드 시 "element 'button' is not allowed for content model
-# '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'" 로 거부됨 - 즉 Tableau가 저장은
-# 하지만 자기 로더는 거부하는 또 다른 저장/로드 포맷 불일치 사례로 확인. <window class='dashboard'>의
-# <simple-id>도 같은 오류에서 "element 'simple-id' is not allowed for content model
-# '((cards,viewpoint?)|(viewpoints,active,device-preview))'"로 거부됨. 두 기능 모두 실물 검증
-# 없이는 재시도하지 않기로 함(Tableau 구현 가이드.md TODO 참고) - 사용자에게 "참고 파일을 완전히
-# 닫았다가 다시 열어도 정상 로드되는지" 재확인 요청 예정.
+DASH_W, DASH_H = 1400, 2400  # <size maxwidth='1400' maxheight='2400'> - fixed-size(px) 환산 기준
+
+# ------------------------------------------------------------------
+# 실제 완료된 PoC 워크북(참고 자료/태블로 예시.twbx, Tableau 2024.2.1로 저장)을 통째로 뜯어서
+# 확인한 진짜 구조. 이전까지 이 스크립트가 썼던 여러 가정이 이 실물 대조로 뒤집힘 - 특히:
+#
+#   - "type-v2='layout-flow'는 h/w 비율을 무시하고 Tableau가 알아서 재계산한다"는 가정이 틀렸음.
+#     실제로는 layout-flow 컨테이너 자체나 그 자식 zone에 is-fixed='true' + fixed-size='NNN'
+#     (NNN은 0~100000 스케일이 아니라 대시보드 실제 픽셀 크기 기준!)을 붙여야 그 방향(세로 흐름
+#     이면 높이, 가로 흐름이면 너비) 크기가 고정된다. is-fixed 없이 h/w만 있으면 Tableau가 내용
+#     기준으로 재계산 - 지금까지 겪은 "일부는 찌그러지고 일부는 화면을 다 차지"의 진짜 원인.
+#     형제 zone을 "동일한 크기"로 맞추는 것도 is-fixed가 아니라 그냥 동일한 w(또는 h) 값을
+#     주는 것만으로 충분 (예: KPI 카드 4개가 전부 w='20000'으로 동일, is-fixed는 카드 개별이
+#     아니라 카드들을 담은 행(row) 컨테이너 자체에만 걸려 있었음).
+#   - 최상위 wrapper는 여전히 layout-basic(param 없음) -> layout-flow(param='vert') ->
+#     layout-flow(param='horz') 순으로 중첩되는 게 실물 패턴 - layout-basic으로 전부 바꾼 지난
+#     시도는 방향이 틀렸음(원상복구).
+#   - <size>에 sizing-mode='fixed'가 실제로 쓰이고 있었음(이전엔 "sizing-mode 없이"가 맞다고
+#     판단했는데, 그건 sizing-mode='automatic' 하나만 실패해봤던 것 - 'fixed'는 별개로 확인됨).
+# ------------------------------------------------------------------
 
 
-def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_ids=None):
+def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir="vert", reuse_ids=None):
     """레이아웃 트리를 실제 zone XML로 재귀 변환.
 
     좌표 체계는 매 depth마다 0~100000으로 리셋되는 게 아니라, 대시보드 전체 캔버스 기준
@@ -874,23 +896,51 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_id
     1개뿐인 컨테이너의 자식 zone이 부모와 완전히 동일한 w/h(98400/98000, 100000이 아님)를
     가졌던 것이 근거. 그래서 이 함수는 x/y/w/h를 절대값으로 받아 그대로 자식에게 분배한다.
 
+    flow_dir: 이 zone을 담고 있는 부모 컨테이너의 흐름 방향('vert'|'horz') - is-fixed/fixed-size를
+    붙일 때 세로 흐름이면 높이(h), 가로 흐름이면 너비(w)를 픽셀로 환산해 고정한다(참고 자료
+    실물 파일에서 확인된 fixed-size 단위 = 대시보드 실제 픽셀, 0~100000 비율이 아님).
+
     reuse_ids가 주어지면(phone 레이아웃 생성 시) 워크시트 leaf zone의 id를 desktop과
     동일하게 재사용 - 실물 파일에서 확인된 패턴. 컨테이너 zone은 desktop/phone 각자 새 id.
     """
+    def fixed_attrs():
+        if not with_style:
+            return ""
+        px = round(h / 100000 * DASH_H) if flow_dir == "vert" else round(w / 100000 * DASH_W)
+        return f" fixed-size='{px}' is-fixed='true'"
+
     kind = node[0]
     if kind == "leaf":
         sn = node[1]
         zid = reuse_ids[sn] if reuse_ids else id_gen()
         sheet_zone_ids[sn] = zid
         style = "\n" + ZONE_STYLE if with_style else ""
-        return f"          <zone h='{h}' id='{zid}' name='{sn}' show-title='false' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
+        return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' name='{sn}' show-title='false' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "text":
         text, fontsize, color = node[1], node[2], node[3]
         zid = id_gen()
         style = "\n" + ZONE_STYLE if with_style else ""
-        return (f"          <zone h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
+        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
                 f"            <formatted-text><run bold='true' fontcolor='{color}' fontsize='{fontsize}'>{text}</run></formatted-text>{style}\n"
+                f"          </zone>")
+
+    if kind == "paramctrl":
+        # 실물 파일(참고 자료/태블로 예시.twbx)에서 확인된 실제 구조 그대로 재현: mode='datetime'
+        # 매개변수 컨트롤 zone. param='[Parameters].[필드이름]', custom-title='true' + formatted-text
+        # 로 컨트롤 위에 보이는 라벨(예: '시작일')을 지정.
+        param_name, label, mode = node[1], node[2], node[3]
+        zid = id_gen()
+        return (f"          <zone{fixed_attrs()} custom-title='true' h='{h}' id='{zid}' mode='{mode}' "
+                f"param='[Parameters].[{param_name}]' type-v2='paramctrl' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <formatted-text>\n              <run>{label}</run>\n            </formatted-text>\n"
+                f"            <zone-style>\n"
+                f"              <format attr='border-color' value='#000000' />\n"
+                f"              <format attr='border-style' value='none' />\n"
+                f"              <format attr='border-width' value='0' />\n"
+                f"              <format attr='margin' value='0' />\n"
+                f"              <format attr='padding-top' value='15' />\n"
+                f"            </zone-style>\n"
                 f"          </zone>")
 
     children = [(_c[2], _c[1]) if _c[0] == "w" else (_c, 1) for _c in node[1]]  # (node, weight)
@@ -901,33 +951,27 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, reuse_id
     if kind == "vert":
         for child, wt in children:
             ch_h = h * wt // total_w
-            parts.append(render_layout(child, id_gen, with_style, x, y + pos, w, ch_h, sheet_zone_ids, reuse_ids))
+            parts.append(render_layout(child, id_gen, with_style, x, y + pos, w, ch_h, sheet_zone_ids, "vert", reuse_ids))
             pos += ch_h
     else:  # horz
         for child, wt in children:
             ch_w = w * wt // total_w
-            parts.append(render_layout(child, id_gen, with_style, x + pos, y, ch_w, h, sheet_zone_ids, reuse_ids))
+            parts.append(render_layout(child, id_gen, with_style, x + pos, y, ch_w, h, sheet_zone_ids, "horz", reuse_ids))
             pos += ch_w
     inner_xml = "\n".join(parts)
     style = "\n" + ZONE_STYLE if with_style else ""
-    # type-v2='layout-basic' (param 없음) - 최상위 root zone에 쓰던 것과 동일한 "절대좌표 고정"
-    # 컨테이너 타입을 중첩 컨테이너에도 그대로 사용. 원래는 type-v2='layout-flow' + param='vert'|
-    # 'horz'(자동 흐름/반응형 컨테이너)를 썼는데, 이게 실제로는 zone-tree에 적어둔 h/w 비율을
-    # 무시하고 Tableau가 내용 기준으로 각 zone 크기를 자체 재계산하는 원인이었음(사용자가 실제
-    # 화면에서 확인 - KPI 카드는 다 찌그러지고 트렌드 차트가 화면 전체를 차지). layout-basic은
-    # 항상 x/y/w/h를 있는 그대로 존중하는 절대 배치 모드라 크기가 고정됨.
-    return f"""        <zone h='{h}' id='{cid}' type-v2='layout-basic' w='{w}' x='{x}' y='{y}'>
+    return f"""        <zone{fixed_attrs()} h='{h}' id='{cid}' param='{kind}' type-v2='layout-flow' w='{w}' x='{x}' y='{y}'>
 {inner_xml}{style}
         </zone>"""
 
 
 def build_dashboard(dash_name, layout_tree):
-    # 실물 확인('대시보드 2', 사용자가 Tableau UI로 만들어 저장 - 정상 동작) + 로드 시점 실제
-    # 오류(D2E8DA72)를 합쳐서 확정한 구조:
+    # 실물 확인(Dashboard_Isolation_Test.twb '대시보드 2' + 참고 자료/태블로 예시.twbx의 실제
+    # PoC 워크북) + 로드 시점 실제 오류(D2E8DA72)를 합쳐서 확정한 구조:
     #   - <datasources>/<datasource-dependencies>는 대시보드에 아예 없음
     #   - 워크시트를 담는 zone엔 type-v2가 없음, 컨테이너 zone엔 type-v2='layout-flow'
-    #     + param='vert'|'horz' (Phone 레이아웃의 실제 예시로 확인됨)
-    #   - <size>는 sizing-mode 없이 명시적 min/max로 지정
+    #     + param='vert'|'horz' + is-fixed/fixed-size로 크기 고정(위 render_layout 주석 참고)
+    #   - <size>에 sizing-mode='fixed' 명시(실물 PoC 파일에서 확인)
     #   - zone마다 <zone-style> 서식 블록 포함
     #   - <devicelayouts>에 Phone 레이아웃이 실제 내용(자체 size+zones)으로 채워져 있고,
     #     워크시트 zone은 desktop과 동일 id를 재사용함
@@ -951,7 +995,7 @@ def build_dashboard(dash_name, layout_tree):
     DASHBOARD_ZONE_IDS[dash_name] = sheet_zone_ids
     return f"""    <dashboard name='{dash_name}'>
       <style />
-      <size maxheight='2400' maxwidth='1400' minheight='2400' minwidth='1400' />
+      <size maxheight='{DASH_H}' maxwidth='{DASH_W}' minheight='{DASH_H}' minwidth='{DASH_W}' sizing-mode='fixed' />
       <zones>
 {desktop_zones}
       </zones>
