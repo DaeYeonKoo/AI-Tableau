@@ -202,6 +202,14 @@ KPI_CARD_DEPS = {
 }
 KPI_CARD_DEPS["KPIAllCard"] = ["claim_id", "claim_amount_usd"]
 
+# KPI Card 필드들은 그 자체가 이미 SUM()/COUNT()를 품은 "완성된 집계" 계산식이라, 별도 집계 없이
+# 그대로 shelf(Text 마크)에 올라간다. 사용자가 Tableau UI에서 이 필드를 뺐다가 다시 넣어서 저장한
+# 실물 파일을 diff해서 확인: 이 경우 column-instance의 derivation이 'None'(접두사 'none')이
+# 아니라 'User'(접두사 'usr')여야 함 - 그동안 'None'으로 잘못 선언했던 게 마크가 계속 빨간
+# 오류로 표시됐던 진짜 원인. (반대로 DateRangeFilter처럼 집계를 전혀 안 쓰는 계산식은 'None'이
+# 맞고, 실제로 그쪽은 처음부터 정상 동작했음.)
+SELF_AGGREGATING_CALC_REFS = {f"Calculation_{k}" for k in KPI_CARD_DEPS}
+
 # 필드 레지스트리: name -> (datatype, role, type)  (raw + calc 통합)
 FIELD_TYPES = {name: (dtype, role, ftype) for name, dtype, role, ftype in COLUMNS}
 for internal, caption, dtype, role, ftype, formula in CALC_FIELDS:
@@ -292,12 +300,19 @@ def col_instance(name, derivation, alias=None):
         out_ftype = "quantitative"
     is_measure = out_ftype == "quantitative"
     suffix = "qk" if is_measure else "nk"
-    inst_name = f"[{derivation.lower()}:{ref}:{suffix}]"
+    # SELF_AGGREGATING_CALC_REFS(KPI Card류)는 이미 그 자체로 완성된 집계식이라, 추가 집계 없이
+    # 그대로 shelf에 올릴 때 derivation이 'None'이 아니라 'User'(접두사 'usr')여야 함 - 실물
+    # 파일 diff로 확인.
+    if derivation == "None" and ref in SELF_AGGREGATING_CALC_REFS:
+        derivation_label, prefix = "User", "usr"
+    else:
+        derivation_label, prefix = derivation, derivation.lower()
+    inst_name = f"[{prefix}:{ref}:{suffix}]"
     qualified = f"[{DS_NAME}].{inst_name}"
     return {
         "ref": ref, "dtype": dtype, "role": role, "ftype": out_ftype,
         "inst_name": inst_name, "qualified": qualified,
-        "derivation": derivation, "is_measure": is_measure,
+        "derivation": derivation_label, "is_measure": is_measure,
         "caption": alias or caption_of(ref),
     }
 
