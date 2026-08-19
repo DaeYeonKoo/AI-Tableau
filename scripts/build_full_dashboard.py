@@ -828,15 +828,6 @@ PAGE_CONTENT = {
 
 DASH_NAMES = list(PAGE_CONTENT.keys())
 
-# 탐색 버튼의 action="tabdoc:goto-sheet window-id=..."이 가리킬 대상 - 대시보드 window의
-# <simple-id>. 실물 파일(태블로 예시.twbx) 2군데(GNB 버튼 자체 + <window class='dashboard'>의
-# simple-id)에서 이 GUID 참조 방식이 실제로 동작하는 걸 확인함. 단, 이 참고 파일은 Tableau
-# 2024.2.1로 저장된 것이고, 이 프로젝트에서 이전에 한 번 이 정확한 조합(버튼 + 창의 simple-id)이
-# 2025.3 신선 로드에서 거부된 적이 있어(D2E8DA72) - 그때는 여러 변경이 한 번에 섞여 있었던
-# 시도였고, 이번엔 실물 구조를 최대한 정확히 재현해서 다시 시도 + 실패 시 원인을 명확히 분리해서
-# 진단할 수 있도록 격리된 커밋으로 남긴다.
-DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name in DASH_NAMES}
-
 
 def gnb_column(current_dash):
     """좌측 메뉴바(GNB) - 대시보드마다 자기 자신 버튼은 강조(활성) 스타일, 나머지는 비활성
@@ -977,31 +968,31 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "navbutton":
-        # 좌측 메뉴바의 대시보드 이동 버튼. 실물 파일(참고 자료/태블로 예시.twbx)의 GNB 버튼
-        # 구조 그대로: type-v2='dashboard-object' + <button action="tabdoc:goto-sheet
-        # window-id=...">. 활성(현재 페이지)/비활성 배경색·글자굵기만 다르고 나머지는 동일.
+        # 클릭 가능한 탐색 버튼(type-v2='dashboard-object' + <button>)은 REAL 2025.3 로드에서
+        # 세 번째로 확실하게 거부됐음(D2E8DA72, 2025-08-19) - 참고 자료/태블로 예시.twbx의
+        # is-fixed/fixed-size/zone-style까지 전부 갖춘 완전한 구조를 그대로 재현했는데도
+        # "element 'button' is not allowed for content model
+        # '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'"로 매번 동일하게 거부됨 -
+        # 즉 이 참고 파일을 저장한 Tableau 2024.2.1과 타깃 2025.3 사이에서 대시보드 탐색 버튼의
+        # 실제 저장 포맷 자체가 바뀐 것으로 결론. <window class='dashboard'>의 <simple-id>도
+        # 마찬가지로 매번 거부됨("(viewpoints,active,device-preview)"에 simple-id 자리가 없음).
+        # 그래서 클릭은 안 되지만 좌측 메뉴바의 "모양"(현재 페이지 강조)은 유지하도록 일반
+        # type-v2='text' zone + 배경색으로 대체 - 실제 클릭 이동은 Tableau UI에서 사용자가 직접
+        # "탐색" 개체를 드래그해서 추가하는 걸 권장(수 초면 되는 표준 기능).
         target_dash, is_active = node[1], node[2]
         zid = id_gen()
-        guid = DASHBOARD_WINDOW_GUIDS[target_dash]
         if is_active:
-            caption_style = "<button-caption-font-style bold='true' fontcolor='#ffffff' fontname='Malgun Gothic' fontsize='12' />"
-            bg = TITLE_COLOR
+            fontcolor, bg = "#ffffff", TITLE_COLOR
         else:
-            caption_style = "<button-caption-font-style fontname='Malgun Gothic' fontsize='12' />"
-            bg = "#f5f5f5"
-        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
-                f"            <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
-                f"              <button-visual-state>\n"
-                f"                <caption>{target_dash}</caption>\n"
-                f"                {caption_style}\n"
-                f"                <format attr='background-color' value='{bg}' />\n"
-                f"              </button-visual-state>\n"
-                f"            </button>\n"
+            fontcolor, bg = "#333333", "#f5f5f5"
+        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <formatted-text><run bold='true' fontcolor='{fontcolor}' fontsize='12'>{target_dash}</run></formatted-text>\n"
                 f"            <zone-style>\n"
                 f"              <format attr='border-color' value='#000000' />\n"
                 f"              <format attr='border-style' value='none' />\n"
                 f"              <format attr='border-width' value='0' />\n"
                 f"              <format attr='margin' value='0' />\n"
+                f"              <format attr='background-color' value='{bg}' />\n"
                 f"            </zone-style>\n"
                 f"          </zone>")
 
@@ -1119,13 +1110,13 @@ for dn, sheets in PAGE_SHEETS.items():
         for sn in sheets
     )
     active_id = zone_ids[sheets[0]]
-    # 탐색 버튼이 window-id로 참조할 수 있게 <simple-id>를 다시 추가 (참고 자료/태블로 예시.twbx
-    # 실물 확인 - GNB 버튼의 action="tabdoc:goto-sheet window-id=..."이 정확히 이 값을 가리킴).
+    # <window class='dashboard'>의 <simple-id>는 REAL 2025.3 로드에서 매번 거부됨(위 navbutton
+    # 주석 참고) - 그래서 DASHBOARD_WINDOW_GUIDS는 더 이상 window에 쓰지 않음(navbutton이
+    # 텍스트로 대체되면서 참조할 데도 없어짐).
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
         f"      <active id='{active_id}' />\n"
-        f"      <simple-id uuid='{DASHBOARD_WINDOW_GUIDS[dn]}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
