@@ -532,7 +532,10 @@ def ws_kpi_text(name, card_field):
     "큰 텍스트 블록" 형태로 렌더링(축 없음)."""
     fci = col_instance(card_field, "None")
     filt_cis, filters_xml, slices_xml = common_filter_block()
-    deps = datasource_dependencies([fci] + filt_cis, sheet_name=name)
+    # 마크(Text)가 실제로 쓰는 카드 필드를 datasource-dependencies의 맨 마지막에 선언 -
+    # 사용자가 Tableau UI에서 "계산 필드를 뺐다가 다시 넣으니" 빨간 오류 표시가 해소된 것과
+    # 최대한 비슷한 상태(그 필드가 "가장 최근에 추가된" 위치)를 재현하기 위한 시도.
+    deps = datasource_dependencies(filt_cis + [fci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -876,7 +879,14 @@ for dn, sheets in PAGE_SHEETS.items():
     # 담고 있었으며, <active id='...'/>는 실제 zone id(더미 '0'이 아님 - 존재하지 않는 zone을
     # 가리키면 크래시로 이어졌을 가능성 높음)를 가리켰음. 첫 워크시트의 zone id를 active로 사용.
     zone_ids = DASHBOARD_ZONE_IDS[dn]
-    viewpoints_xml = "\n".join(f"        <viewpoint name='{sn}' />" for sn in sheets)
+    # 대시보드에 배치된 워크시트를 "표준" 대신 "전체 보기"로 설정 - 2026.2 XSD의
+    # VisualDoc-Viewpoint-G/VisualDoc-Zoom-G 그룹에서 <viewpoint name='...'><zoom type='...'/>
+    # </viewpoint> 구조와 VisualDoc-ZoomType-ST enum(percent/entire-view/fit-width/fit-height)을
+    # 확인함 - 대시보드 창의 <viewpoints> 항목마다 붙이는 표준 방식.
+    viewpoints_xml = "\n".join(
+        f"        <viewpoint name='{sn}'>\n          <zoom type='entire-view' />\n        </viewpoint>"
+        for sn in sheets
+    )
     active_id = zone_ids[sheets[0]]
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
