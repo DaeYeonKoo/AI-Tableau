@@ -797,6 +797,13 @@ def W(weight, node):
 TITLE_COLOR = "#16324F"
 
 
+def captioned(caption, node, cap_h=1, body_h=9):
+    """차트 위에 작은 캡션(예: '월별 클레임 건수·금액 추이')을 붙인다 - 기획안의
+    .card h2 캡션 문구 재현. 워크시트 자체 제목(show-title)은 계속 숨긴 채, 별도
+    text zone으로 캡션만 보여줌."""
+    return ("vert", [W(cap_h, ("text", caption, 13, TITLE_COLOR)), W(body_h, node)])
+
+
 def title_row(text, owner_ws):
     """제목 + 필터 박스(고객사/생산공장/부품카테고리 드롭다운 + 시작일/종료일)를 한 줄에 배치.
     필터 드롭다운은 실물 파일(참고 자료/필터 예시.twbx, "Reset filter sample")에서 확인된
@@ -821,26 +828,39 @@ PAGE_CONTENT = {
             ("leaf", "1_KPI_1M", "card"), ("leaf", "1_KPI_3M", "card"), ("leaf", "1_KPI_6M", "card"),
             ("leaf", "1_KPI_12M", "card"), ("leaf", "1_KPI_All", "card-hl"),
         ])),
-        W(7, ("leaf", "1_Trend")),
+        W(7, captioned("월별 클레임 건수 · 금액 추이", ("leaf", "1_Trend"))),
         W(12, ("horz", [
-            ("leaf", "1_Map"),
-            ("vert", [("leaf", "1_Top5_Customer"), ("leaf", "1_Top5_Defect"), ("leaf", "1_Top5_Plant")]),
+            captioned("국가별 클레임 규모", ("leaf", "1_Map")),
+            ("vert", [
+                captioned("Top 5 고객사", ("leaf", "1_Top5_Customer")),
+                captioned("Top 5 불량 유형", ("leaf", "1_Top5_Defect")),
+                captioned("Top 5 생산공장", ("leaf", "1_Top5_Plant")),
+            ]),
         ])),
     ]),
     "2. 원인 드릴다운": ("vert", [
         W(2, title_row("원인 드릴다운", "2_SM_1")),
-        W(8, ("horz", [("leaf", f"2_SM_{i}") for i in range(1, 6)])),
+        W(8, ("horz", [captioned(cat, ("leaf", f"2_SM_{i}")) for i, cat in enumerate(CATEGORIES, start=1)])),
         W(12, ("horz", [
-            ("leaf", "2_Heatmap"),
-            ("vert", [("leaf", "2_Rank_Category"), ("leaf", "2_Rank_DefectCount")]),
+            captioned("생산공장 × 불량유형 히트맵", ("leaf", "2_Heatmap")),
+            ("vert", [
+                captioned("부품 카테고리별 순위", ("leaf", "2_Rank_Category")),
+                captioned("불량유형별 건수", ("leaf", "2_Rank_DefectCount")),
+            ]),
         ])),
-        W(6, ("leaf", "2_CustComposition")),
+        W(6, captioned("고객사별 구성비", ("leaf", "2_CustComposition"))),
     ]),
     "3. 리드타임 효율": ("vert", [
         W(2, title_row("리드타임 · 효율", "3_Status")),
-        W(9, ("horz", [("leaf", "3_Status"), ("leaf", "3_Severity")])),
-        W(9, ("horz", [("leaf", "3_LeadTime_Receive"), ("leaf", "3_LeadTime_Confirm")])),
-        W(9, ("horz", [("leaf", "3_Cycle_Customer"), ("leaf", "3_Cycle_Plant")])),
+        W(9, ("horz", [captioned("클레임 상태", ("leaf", "3_Status")), captioned("심각도", ("leaf", "3_Severity"))])),
+        W(9, ("horz", [
+            captioned("리드타임 분포 — 발생 → 접수", ("leaf", "3_LeadTime_Receive")),
+            captioned("리드타임 분포 — 접수 → 확정", ("leaf", "3_LeadTime_Confirm")),
+        ])),
+        W(9, ("horz", [
+            captioned("고객사별 평균 처리기간", ("leaf", "3_Cycle_Customer")),
+            captioned("생산공장별 평균 처리기간", ("leaf", "3_Cycle_Plant")),
+        ])),
     ]),
 }
 
@@ -848,11 +868,16 @@ DASH_NAMES = list(PAGE_CONTENT.keys())
 
 
 def gnb_column(current_dash):
-    """좌측 메뉴바(GNB) - 대시보드마다 자기 자신 버튼은 강조(활성) 스타일, 나머지는 비활성
-    스타일로 표시. 실물 파일(참고 자료/태블로 예시.twbx)의 GNB 사이드바 구조 그대로 재현:
-    fixed-size 폭 고정 컬럼 안에 대시보드 개수만큼 <navbutton> + 아래 여백을 채우는 <empty>."""
-    buttons = [W(6, ("navbutton", n, n == current_dash)) for n in DASH_NAMES]
-    return ("vert", buttons + [W(60, ("empty",))])
+    """좌측 메뉴바(GNB) - 기획안 사이드바처럼 위에 워드마크, 그 아래 대시보드별 이동 항목을
+    짧고 촘촘하게 배치(이전엔 버튼 비중이 너무 커서 항목 사이 간격이 과하게 벌어졌음).
+    대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성 스타일. 실물 파일(참고
+    자료/태블로 예시.twbx)의 GNB 사이드바 구조 재현: fixed-size 폭 고정 컬럼 + 아래 여백은
+    <empty>로 채움."""
+    wordmark = W(8, ("text", "SL Corporation", 16, TITLE_COLOR))
+    spacer = W(2, ("empty",))
+    buttons = [W(3, ("navbutton", n, n == current_dash)) for n in DASH_NAMES]
+    filler = W(81, ("empty",))
+    return ("vert", [wordmark, spacer] + buttons + [filler])
 
 
 # 최종 페이지 트리 = 좌측 GNB(고정 폭) + 기존 콘텐츠(나머지 폭). 실물 파일의 "GNB 컬럼 +
