@@ -796,7 +796,7 @@ def title_row(text):
     ])
 
 
-PAGE_LAYOUTS = {
+PAGE_CONTENT = {
     "1. 종합 요약": ("vert", [
         W(2, title_row("종합 요약")),
         W(7, ("horz", [
@@ -826,11 +826,38 @@ PAGE_LAYOUTS = {
     ]),
 }
 
+DASH_NAMES = list(PAGE_CONTENT.keys())
+
+# 탐색 버튼의 action="tabdoc:goto-sheet window-id=..."이 가리킬 대상 - 대시보드 window의
+# <simple-id>. 실물 파일(태블로 예시.twbx) 2군데(GNB 버튼 자체 + <window class='dashboard'>의
+# simple-id)에서 이 GUID 참조 방식이 실제로 동작하는 걸 확인함. 단, 이 참고 파일은 Tableau
+# 2024.2.1로 저장된 것이고, 이 프로젝트에서 이전에 한 번 이 정확한 조합(버튼 + 창의 simple-id)이
+# 2025.3 신선 로드에서 거부된 적이 있어(D2E8DA72) - 그때는 여러 변경이 한 번에 섞여 있었던
+# 시도였고, 이번엔 실물 구조를 최대한 정확히 재현해서 다시 시도 + 실패 시 원인을 명확히 분리해서
+# 진단할 수 있도록 격리된 커밋으로 남긴다.
+DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name in DASH_NAMES}
+
+
+def gnb_column(current_dash):
+    """좌측 메뉴바(GNB) - 대시보드마다 자기 자신 버튼은 강조(활성) 스타일, 나머지는 비활성
+    스타일로 표시. 실물 파일(참고 자료/태블로 예시.twbx)의 GNB 사이드바 구조 그대로 재현:
+    fixed-size 폭 고정 컬럼 안에 대시보드 개수만큼 <navbutton> + 아래 여백을 채우는 <empty>."""
+    buttons = [W(6, ("navbutton", n, n == current_dash)) for n in DASH_NAMES]
+    return ("vert", buttons + [W(60, ("empty",))])
+
+
+# 최종 페이지 트리 = 좌측 GNB(고정 폭) + 기존 콘텐츠(나머지 폭). 실물 파일의 "GNB 컬럼 +
+# 콘텐츠 컬럼" horz 2분할 패턴을 그대로 따름(GNB w=13750 즉 폭의 13.75% - 실물 예시와 동일 비율).
+PAGE_LAYOUTS = {
+    name: ("horz", [W(1375, gnb_column(name)), W(8625, tree)])
+    for name, tree in PAGE_CONTENT.items()
+}
+
 
 def flatten_leaves(node):
     if node[0] == "leaf":
         return [node[1]]
-    if node[0] in ("text", "paramctrl"):
+    if node[0] in ("text", "paramctrl", "navbutton", "empty"):
         return []
     out = []
     for child in node[1]:
@@ -940,6 +967,41 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
                 f"              <format attr='border-width' value='0' />\n"
                 f"              <format attr='margin' value='0' />\n"
                 f"              <format attr='padding-top' value='15' />\n"
+                f"            </zone-style>\n"
+                f"          </zone>")
+
+    if kind == "empty":
+        # GNB 사이드바 하단 여백 채우기용 - 실물 파일의 type-v2='empty' 스페이서 zone과 동일.
+        zid = id_gen()
+        style = "\n" + ZONE_STYLE if with_style else ""
+        return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
+
+    if kind == "navbutton":
+        # 좌측 메뉴바의 대시보드 이동 버튼. 실물 파일(참고 자료/태블로 예시.twbx)의 GNB 버튼
+        # 구조 그대로: type-v2='dashboard-object' + <button action="tabdoc:goto-sheet
+        # window-id=...">. 활성(현재 페이지)/비활성 배경색·글자굵기만 다르고 나머지는 동일.
+        target_dash, is_active = node[1], node[2]
+        zid = id_gen()
+        guid = DASHBOARD_WINDOW_GUIDS[target_dash]
+        if is_active:
+            caption_style = "<button-caption-font-style bold='true' fontcolor='#ffffff' fontname='Malgun Gothic' fontsize='12' />"
+            bg = TITLE_COLOR
+        else:
+            caption_style = "<button-caption-font-style fontname='Malgun Gothic' fontsize='12' />"
+            bg = "#f5f5f5"
+        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
+                f"              <button-visual-state>\n"
+                f"                <caption>{target_dash}</caption>\n"
+                f"                {caption_style}\n"
+                f"                <format attr='background-color' value='{bg}' />\n"
+                f"              </button-visual-state>\n"
+                f"            </button>\n"
+                f"            <zone-style>\n"
+                f"              <format attr='border-color' value='#000000' />\n"
+                f"              <format attr='border-style' value='none' />\n"
+                f"              <format attr='border-width' value='0' />\n"
+                f"              <format attr='margin' value='0' />\n"
                 f"            </zone-style>\n"
                 f"          </zone>")
 
@@ -1057,10 +1119,13 @@ for dn, sheets in PAGE_SHEETS.items():
         for sn in sheets
     )
     active_id = zone_ids[sheets[0]]
+    # 탐색 버튼이 window-id로 참조할 수 있게 <simple-id>를 다시 추가 (참고 자료/태블로 예시.twbx
+    # 실물 확인 - GNB 버튼의 action="tabdoc:goto-sheet window-id=..."이 정확히 이 값을 가리킴).
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
         f"      <active id='{active_id}' />\n"
+        f"      <simple-id uuid='{DASHBOARD_WINDOW_GUIDS[dn]}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
