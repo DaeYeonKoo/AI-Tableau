@@ -786,11 +786,18 @@ def W(weight, node):
 TITLE_COLOR = "#16324F"
 
 
-def title_row(text):
-    """제목 + 시작일/종료일 매개변수 컨트롤(paramctrl)을 한 줄에 배치.
-    실물 파일(참고 자료/태블로 예시.twbx)에서 확인된 실제 paramctrl 구조 사용."""
+def title_row(text, owner_ws):
+    """제목 + 필터 박스(고객사/생산공장/부품카테고리 드롭다운 + 시작일/종료일)를 한 줄에 배치.
+    필터 드롭다운은 실물 파일(참고 자료/필터 예시.twbx, "Reset filter sample")에서 확인된
+    type='filter' mode='checkdropdown' 구조를 그대로 재현(아래 filterctrl 분기 참고).
+    owner_ws: 이 필터를 "소유"하는 워크시트 이름 - 그 대시보드에 실제로 배치된 워크시트여야
+    하고(필터 zone의 name= 속성), 이미 모든 워크시트가 동일한 customer/production_plant/
+    part_category 필터를 갖고 있어(common_filter_block) 어떤 워크시트를 골라도 됨."""
     return ("horz", [
-        W(20, ("text", text, 24, TITLE_COLOR)),
+        W(14, ("text", text, 22, TITLE_COLOR)),
+        W(6, ("filterctrl", "customer", owner_ws)),
+        W(6, ("filterctrl", "production_plant", owner_ws)),
+        W(6, ("filterctrl", "part_category", owner_ws)),
         W(4, ("paramctrl", "Parameter 1", "시작일", "datetime")),
         W(4, ("paramctrl", "Parameter 2", "종료일", "datetime")),
     ])
@@ -798,7 +805,7 @@ def title_row(text):
 
 PAGE_CONTENT = {
     "1. 종합 요약": ("vert", [
-        W(2, title_row("종합 요약")),
+        W(2, title_row("종합 요약", "1_KPI_1M")),
         W(7, ("horz", [
             ("leaf", "1_KPI_1M"), ("leaf", "1_KPI_3M"), ("leaf", "1_KPI_6M"),
             ("leaf", "1_KPI_12M"), ("leaf", "1_KPI_All"),
@@ -810,7 +817,7 @@ PAGE_CONTENT = {
         ])),
     ]),
     "2. 원인 드릴다운": ("vert", [
-        W(2, title_row("원인 드릴다운")),
+        W(2, title_row("원인 드릴다운", "2_SM_1")),
         W(8, ("horz", [("leaf", f"2_SM_{i}") for i in range(1, 6)])),
         W(12, ("horz", [
             ("leaf", "2_Heatmap"),
@@ -819,7 +826,7 @@ PAGE_CONTENT = {
         W(6, ("leaf", "2_CustComposition")),
     ]),
     "3. 리드타임 효율": ("vert", [
-        W(2, title_row("리드타임 · 효율")),
+        W(2, title_row("리드타임 · 효율", "3_Status")),
         W(9, ("horz", [("leaf", "3_Status"), ("leaf", "3_Severity")])),
         W(9, ("horz", [("leaf", "3_LeadTime_Receive"), ("leaf", "3_LeadTime_Confirm")])),
         W(9, ("horz", [("leaf", "3_Cycle_Customer"), ("leaf", "3_Cycle_Plant")])),
@@ -848,7 +855,7 @@ PAGE_LAYOUTS = {
 def flatten_leaves(node):
     if node[0] == "leaf":
         return [node[1]]
-    if node[0] in ("text", "paramctrl", "navbutton", "empty"):
+    if node[0] in ("text", "paramctrl", "navbutton", "empty", "filterctrl"):
         return []
     out = []
     for child in node[1]:
@@ -958,6 +965,25 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
                 f"              <format attr='border-width' value='0' />\n"
                 f"              <format attr='margin' value='0' />\n"
                 f"              <format attr='padding-top' value='15' />\n"
+                f"            </zone-style>\n"
+                f"          </zone>")
+
+    if kind == "filterctrl":
+        # 필터 드롭다운(고객사/생산공장/부품카테고리). 실물 파일(참고 자료/필터 예시.twbx,
+        # "Reset filter sample")에서 확인된 실제 구조: type-v2='filter' mode='checkdropdown'
+        # show-apply='true', name=이 필터를 소유한 워크시트 이름, param=필드의 qualified
+        # column-instance. 모든 워크시트가 이미 동일한 필터(전체 선택 상태)를 갖고 있어서
+        # 어떤 워크시트를 owner로 지정해도 동일하게 동작함(common_filter_block).
+        field_name, owner_ws = node[1], node[2]
+        fci = col_instance(field_name, "None")
+        zid = id_gen()
+        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' mode='checkdropdown' name='{owner_ws}' "
+                f"param='{fci['qualified']}' show-apply='true' type-v2='filter' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <zone-style>\n"
+                f"              <format attr='border-color' value='#000000' />\n"
+                f"              <format attr='border-style' value='none' />\n"
+                f"              <format attr='border-width' value='0' />\n"
+                f"              <format attr='margin' value='4' />\n"
                 f"            </zone-style>\n"
                 f"          </zone>")
 
