@@ -39,6 +39,7 @@ import os
 import uuid
 import tempfile
 import urllib.request
+import urllib.parse
 
 TMP = tempfile.gettempdir()
 XSD_URL = "https://raw.githubusercontent.com/tableau/tableau-document-schemas/main/schemas/2026_2/twb_2026.2.0.xsd"
@@ -157,6 +158,10 @@ CALC_FIELDS = [
     # 패턴은 2_SM_* 워크시트에서 이미 검증된(실물 로드 성공) 구조라 이 필터도 그대로 재사용.
     ("DateRangeFilter", "Date Range Filter", "boolean", "dimension", "nominal",
      "[occurrence_date] >= [Parameters].[Parameter 1] AND [occurrence_date] <= [Parameters].[Parameter 2]"),
+    # 필터 초기화 버튼(Reset 워크시트)의 Text 마크에 올라가는 라벨 하나뿐인 계산식. 참고 자료/
+    # 필터 예시.twbx의 'Reset' 워크시트가 쓰는 것과 동일한 패턴 - 이 자체는 아무 필터 로직도
+    # 없고, 클릭했을 때 workbook-level <action>(tsc:tsl-filter)이 실제 초기화를 수행한다.
+    ("ResetLabel", "Reset", "string", "dimension", "nominal", '"필터 초기화"'),
 ]
 
 # 1페이지 KPI 카드 5개(최근1/3/6/12개월 + 전체)용 조건부 계산식. 실제 <filter> XML은 아직
@@ -856,6 +861,58 @@ def ws_map(name):
     </worksheet>"""
 
 
+def ws_reset(name):
+    """필터 초기화 버튼. 참고 자료/필터 예시.twbx의 'Reset' 워크시트(텍스트 계산식 하나를
+    Text 마크로 올린 빈 뷰, <filter> 없음) 구조를 그대로 재현 - 이 워크시트 자체는 아무 필터도
+    갖지 않고, 대시보드에 배치된 뒤 클릭하면 workbook-level <action>(tsc:tsl-filter)이 발동해
+    customer/production_plant/part_category 필터를 전부 '전체 선택'으로 되돌린다. 날짜범위
+    (시작일/종료일 매개변수)는 이 매커니즘(필터 ~na 초기화)으로는 초기화되지 않음 - 매개변수는
+    필터가 아니라서 별도 확인 필요(대시보드 요구사항 목록 7번 관련 리스크)."""
+    rci = col_instance("ResetLabel", "None")
+    deps = datasource_dependencies([rci], sheet_name=name)
+    return f"""    <worksheet name='{name}'>
+      <table>
+        <view>
+          <datasources>
+            <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
+          </datasources>
+          <datasource-dependencies datasource='{DS_NAME}'>
+{deps}
+          </datasource-dependencies>
+          <aggregation value='true' />
+        </view>
+        <style>
+          <style-rule element='cell'>
+            <format attr='color' value='{NAVY_2}' />
+          </style-rule>
+          <style-rule element='table'>
+            <format attr='background-color' value='#eef2f7' />
+          </style-rule>
+        </style>
+        <panes>
+          <pane selection-relaxation-option='selection-relaxation-allow'>
+            <view>
+              <breakdown value='auto' />
+            </view>
+            <mark class='Text' />
+            <encodings>
+              <text column='{rci['qualified']}' />
+            </encodings>
+            <style>
+              <style-rule element='cell'>
+                <format attr='text-align' value='center' />
+                <format attr='vertical-align' value='center' />
+              </style-rule>
+            </style>
+          </pane>
+        </panes>
+        <rows></rows>
+        <cols></cols>
+        <tooltip-style tooltip-mode='none' />
+      </table>
+    </worksheet>"""
+
+
 # ------------------------------------------------------------------
 # 5) 17개 워크시트 조립
 # ------------------------------------------------------------------
@@ -889,6 +946,7 @@ add("1_Map", ws_map("1_Map"))
 add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd", mark_color=NAVY_2, top_n=5))
 add("1_Top5_Defect", ws_simple_bar("1_Top5_Defect", "defect_type_en", "claim_amount_usd", mark_color=NAVY_2, top_n=5))
 add("1_Top5_Plant", ws_simple_bar("1_Top5_Plant", "production_plant", "claim_amount_usd", mark_color=NAVY_2, top_n=5))
+add("1_Reset", ws_reset("1_Reset"))
 
 # Page 2
 for i, cat in enumerate(CATEGORIES, start=1):
@@ -897,6 +955,7 @@ add("2_Heatmap", ws_heatmap("2_Heatmap", "production_plant", "defect_type_en", "
 add("2_Rank_Category", ws_simple_bar("2_Rank_Category", "part_category", "claim_amount_usd", mark_color=NAVY_2))
 add("2_Rank_DefectCount", ws_simple_bar("2_Rank_DefectCount", "defect_type_en", "claim_id", "Count", mark_color=NAVY_2))
 add("2_CustComposition", ws_simple_bar("2_CustComposition", "customer", "claim_amount_usd", mark_color=NAVY_2))
+add("2_Reset", ws_reset("2_Reset"))
 
 # Page 3
 add("3_Status", ws_simple_bar("3_Status", "claim_status", "claim_id", "Count", color_dim="claim_status"))
@@ -905,6 +964,7 @@ add("3_Cycle_Plant", ws_simple_bar("3_Cycle_Plant", "production_plant", "TotalCy
 add("3_Severity", ws_simple_bar("3_Severity", "severity", "claim_amount_usd", "Sum", color_dim="severity"))
 add("3_LeadTime_Receive", ws_simple_bar("3_LeadTime_Receive", "claim_status", "LeadTimeToReceive", "Avg", mark_color=NAVY_2))
 add("3_LeadTime_Confirm", ws_simple_bar("3_LeadTime_Confirm", "claim_status", "LeadTimeToConfirm", "Avg", mark_color=GOOD))
+add("3_Reset", ws_reset("3_Reset"))
 
 WORKSHEETS_XML = "\n".join(worksheet_blocks)
 
@@ -937,27 +997,30 @@ def title_row(text):
     ])
 
 
-def filter_row(owner_ws):
-    """필터 박스: 고객사/생산공장/부품카테고리 드롭다운 + 시작일/종료일. 필터 드롭다운은
-    실물 파일(참고 자료/필터 예시.twbx, "Reset filter sample")에서 확인된 type='filter'
-    mode='checkdropdown' 구조를 그대로 재현(아래 filterctrl 분기 참고).
+def filter_row(owner_ws, reset_ws):
+    """필터 박스: 고객사/생산공장/부품카테고리 드롭다운 + 시작일/종료일 + 필터 초기화 버튼.
+    필터 드롭다운은 실물 파일(참고 자료/필터 예시.twbx, "Reset filter sample")에서 확인된
+    type='filter' mode='checkdropdown' 구조를 그대로 재현(아래 filterctrl 분기 참고).
     owner_ws: 이 필터를 "소유"하는 워크시트 이름 - 그 대시보드에 실제로 배치된 워크시트여야
     하고(필터 zone의 name= 속성), 이미 모든 워크시트가 동일한 customer/production_plant/
-    part_category 필터를 갖고 있어(common_filter_block) 어떤 워크시트를 골라도 됨."""
+    part_category 필터를 갖고 있어(common_filter_block) 어떤 워크시트를 골라도 됨.
+    reset_ws: 이 대시보드용 Reset 워크시트 이름(ws_reset) - 클릭하면 workbook-level
+    <action>이 발동해 3개 차원 필터를 초기화(대시보드 기획안.html .filter-reset 버튼 재현)."""
     return ("horz", [
         W(6, ("filterctrl", "customer", owner_ws)),
         W(6, ("filterctrl", "production_plant", owner_ws)),
         W(6, ("filterctrl", "part_category", owner_ws)),
         W(4, ("paramctrl", "Parameter 1", "시작일", "datetime")),
         W(4, ("paramctrl", "Parameter 2", "종료일", "datetime")),
-        W(10, ("empty",)),
+        W(3, ("leaf", reset_ws, "reset-btn")),
+        W(7, ("empty",)),
     ])
 
 
 PAGE_CONTENT = {
     "1. 종합 요약": ("vert", [
         W(2, title_row("종합 요약")),
-        W(2, filter_row("1_KPI_1M")),
+        W(2, filter_row("1_KPI_1M", "1_Reset")),
         W(5, ("horz", [
             ("leaf", "1_KPI_1M", "card"), ("leaf", "1_KPI_3M", "card"), ("leaf", "1_KPI_6M", "card"),
             ("leaf", "1_KPI_12M", "card"), ("leaf", "1_KPI_All", "card-hl"),
@@ -974,7 +1037,7 @@ PAGE_CONTENT = {
     ]),
     "2. 원인 드릴다운": ("vert", [
         W(2, title_row("원인 드릴다운")),
-        W(2, filter_row("2_SM_1")),
+        W(2, filter_row("2_SM_1", "2_Reset")),
         W(8, ("horz", [captioned(cat, ("leaf", f"2_SM_{i}")) for i, cat in enumerate(CATEGORIES, start=1)])),
         W(12, ("horz", [
             captioned("생산공장 × 불량유형 히트맵", ("leaf", "2_Heatmap")),
@@ -987,7 +1050,7 @@ PAGE_CONTENT = {
     ]),
     "3. 리드타임 효율": ("vert", [
         W(2, title_row("리드타임 · 효율")),
-        W(2, filter_row("3_Status")),
+        W(2, filter_row("3_Status", "3_Reset")),
         W(9, ("horz", [captioned("클레임 상태", ("leaf", "3_Status")), captioned("심각도", ("leaf", "3_Severity"))])),
         W(9, ("horz", [
             captioned("리드타임 분포 — 발생 → 접수", ("leaf", "3_LeadTime_Receive")),
@@ -1084,7 +1147,17 @@ CARD_HIGHLIGHT_ZONE_STYLE = """            <zone-style>
               <format attr='background-color' value='#16324f' />
             </zone-style>"""
 
-LEAF_ZONE_STYLES = {"card": CARD_ZONE_STYLE, "card-hl": CARD_HIGHLIGHT_ZONE_STYLE}
+# 기획안 .filter-reset 버튼 CSS(옅은 회색-남색 배경 #eef2f7 + 옅은 테두리) 재현.
+RESET_BTN_ZONE_STYLE = """            <zone-style>
+              <format attr='border-color' value='#e2e6ec' />
+              <format attr='border-style' value='solid' />
+              <format attr='border-width' value='1' />
+              <format attr='margin' value='4' />
+              <format attr='padding' value='2' />
+              <format attr='background-color' value='#eef2f7' />
+            </zone-style>"""
+
+LEAF_ZONE_STYLES = {"card": CARD_ZONE_STYLE, "card-hl": CARD_HIGHLIGHT_ZONE_STYLE, "reset-btn": RESET_BTN_ZONE_STYLE}
 
 
 DASHBOARD_ZONE_IDS = {}  # dash_name -> {sheet_name: zone_id} (desktop 기준) - window의 active/viewpoints에 재사용
@@ -1363,7 +1436,10 @@ CARDS_BLOCK = """      <cards>
 #     대시보드 창에도 <cards>를 그대로 재사용한 게 2805CF18의 유력한 원인으로 추정됨 - 이번에 분리.
 window_blocks = []
 for sn in worksheet_names:
-    window_blocks.append(f"    <window class='worksheet' name='{sn}'>\n{CARDS_BLOCK}\n    </window>")
+    # Reset 워크시트는 탭으로 노출되지 않는 "클릭 소스" 전용 - 실물 파일(참고 자료/필터
+    # 예시.twbx)에서도 <window class='worksheet' hidden='true' name='Reset'>로 확인됨.
+    hidden_attr = " hidden='true'" if sn.endswith("_Reset") else ""
+    window_blocks.append(f"    <window class='worksheet'{hidden_attr} name='{sn}'>\n{CARDS_BLOCK}\n    </window>")
 for dn, sheets in PAGE_SHEETS.items():
     # 실물 확인('대시보드 2'): <viewpoints>는 비어있지 않고 워크시트별 <viewpoint name='...'/>를
     # 담고 있었으며, <active id='...'/>는 실제 zone id(더미 '0'이 아님 - 존재하지 않는 zone을
@@ -1377,7 +1453,10 @@ for dn, sheets in PAGE_SHEETS.items():
         f"        <viewpoint name='{sn}'>\n          <zoom type='entire-view' />\n        </viewpoint>"
         for sn in sheets
     )
-    active_id = zone_ids[sheets[0]]
+    # active는 Reset 워크시트가 아니라 실제 차트를 가리키도록(사용자 시선 흐름상 자연스러운
+    # 기본 선택) - filter_row에 넣은 reset-btn leaf가 트리 순회상 먼저 나오므로 제외하고 고름.
+    non_reset_sheets = [sn for sn in sheets if not sn.endswith("_Reset")] or sheets
+    active_id = zone_ids[non_reset_sheets[0]]
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
@@ -1386,6 +1465,46 @@ for dn, sheets in PAGE_SHEETS.items():
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
+
+# ------------------------------------------------------------------
+# 7-1) 필터 초기화 액션(workbook-level <actions>) - 참고 자료/필터 예시.twbx의 실물 구조를
+# 그대로 재현: 대시보드마다 자기 Reset 워크시트를 클릭 소스로 삼는 tsc:tsl-filter URL 액션 1개.
+# expression은 'tsl:<대시보드이름(URL인코딩)>?<[데이터소스].[필드](URL인코딩)>~s0=<[필드]~na>&...'
+# 형태 - 각 필드를 '값 없음(~na)'으로 지정해 필터를 사실상 초기화한다. 시작일/종료일은 필터가
+# 아니라 매개변수(Parameter 1/2) 기반이라 이 매커니즘으로는 초기화되지 않음 - 알려진 한계.
+# ------------------------------------------------------------------
+def build_reset_action(dash_name, reset_ws, action_id):
+    pairs = []
+    for f in FILTER_DIMS:
+        token = urllib.parse.quote(f"[{DS_NAME}].[{f}]")
+        pairs.append(f"{token}~s0=&lt;[{f}]~na&gt;")
+    expr = f"tsl:{urllib.parse.quote(dash_name)}?" + "&amp;".join(pairs)
+    return (
+        f"    <action caption='Reset' name='[{action_id}]'>\n"
+        f"      <activation auto-clear='true' type='on-select' />\n"
+        f"      <source dashboard='{dash_name}' type='sheet' worksheet='{reset_ws}' />\n"
+        f"      <link caption='Reset' delimiter=',' escape='\\' expression='{expr}' include-null='true' multi-select='true' url-escape='true' />\n"
+        f"      <command command='tsc:tsl-filter'>\n"
+        f"        <param name='target' value='{dash_name}' />\n"
+        f"      </command>\n"
+        f"    </action>"
+    )
+
+
+ACTIONS_BODY = "\n".join(
+    build_reset_action(dash_name, f"{i}_Reset", f"Action{i}")
+    for i, dash_name in enumerate(DASH_NAMES, start=1)
+)
+ACTION_FIELD_DEPS = "\n".join(base_column_xml(f) for f in FILTER_DIMS)
+ACTIONS_XML = f"""  <actions>
+{ACTIONS_BODY}
+    <datasources>
+      <datasource name='{DS_NAME}' />
+    </datasources>
+    <datasource-dependencies datasource='{DS_NAME}'>
+{ACTION_FIELD_DEPS}
+    </datasource-dependencies>
+  </actions>"""
 
 # ------------------------------------------------------------------
 # 8) 최종 조립
@@ -1438,6 +1557,7 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
   <mapsources>
     <mapsource name='Tableau' />
   </mapsources>
+{ACTIONS_XML}
   <worksheets>
 {WORKSHEETS_XML}
   </worksheets>
