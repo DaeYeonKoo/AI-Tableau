@@ -51,6 +51,9 @@ CSV_PATH_ABS = r"c:\Users\milvus-Tom\.claude\Project\AI-Tableau\data\sl_corporat
 CSV_DIR_ABS = CSV_PATH_ABS.replace("\\", "/").rsplit("/", 1)[0]
 CSV_FILENAME = "sl_corporation_quality_claims.csv"
 
+# 로고 이미지 - .twb 단일 파일이라 twbx 패키징 없이 절대경로로 직접 참조 시도(미검증).
+LOGO_PATH_ABS = r"c:\Users\milvus-Tom\.claude\Project\AI-Tableau\대시보드\assets\sl_logo.png".replace("\\", "/")
+
 # ------------------------------------------------------------------
 # 1) 원본 컬럼 (Data Dictionary.md 그대로)
 # ------------------------------------------------------------------
@@ -307,6 +310,12 @@ def field_ref(name):
     return name
 
 
+# 날짜 파생(derivation) 접두사 - 이중축 예시.twbx에서 derivation='Month' -> 접두사 'mn'이
+# 실물로 확인됨(Sum->sum처럼 소문자 그대로가 아니었음). Year/Quarter/Week/Day는 같은 관례를
+# 따를 것으로 추정(미검증) - 우선 Month/Year만 실제로 사용.
+DATE_PART_DERIVATIONS = {"Year": "yr", "Quarter": "qr", "Month": "mn", "Week": "wk", "Day": "dy"}
+
+
 def col_instance(name, derivation, alias=None):
     """rows/cols/encodings에서 쓸 column-instance 이름/타입/베이스컬럼 정보를 묶어서 반환.
 
@@ -317,18 +326,28 @@ def col_instance(name, derivation, alias=None):
     """
     ref = field_ref(name)
     dtype, role, ftype = FIELD_TYPES[ref]
-    # 집계(Sum/Count/Avg 등)를 적용하면 원본 필드 타입과 무관하게 결과는 항상 quantitative
     if derivation == "None":
         out_ftype = ftype
+    elif derivation in DATE_PART_DERIVATIONS:
+        # Year/Month 같은 날짜 파생은 집계가 아니라 날짜 일부를 뽑아내는 것 - 결과가
+        # quantitative로 바뀌지 않고 ordinal로 남음(실물 파일에서 derivation='Month'가
+        # type='ordinal' suffix='ok'였던 것으로 확인 - 이중축 예시.twbx [mn:주문 날짜:ok]).
+        out_ftype = "ordinal"
     else:
+        # 집계(Sum/Count/Avg 등)를 적용하면 원본 필드 타입과 무관하게 결과는 항상 quantitative
         out_ftype = "quantitative"
     is_measure = out_ftype == "quantitative"
-    suffix = "qk" if is_measure else "nk"
+    if out_ftype == "ordinal":
+        suffix = "ok"
+    else:
+        suffix = "qk" if is_measure else "nk"
     # SELF_AGGREGATING_CALC_REFS(KPI Card류)는 이미 그 자체로 완성된 집계식이라, 추가 집계 없이
     # 그대로 shelf에 올릴 때 derivation이 'None'이 아니라 'User'(접두사 'usr')여야 함 - 실물
     # 파일 diff로 확인.
     if derivation == "None" and ref in SELF_AGGREGATING_CALC_REFS:
         derivation_label, prefix = "User", "usr"
+    elif derivation in DATE_PART_DERIVATIONS:
+        derivation_label, prefix = derivation, DATE_PART_DERIVATIONS[derivation]
     else:
         derivation_label, prefix = derivation, derivation.lower()
     inst_name = f"[{prefix}:{ref}:{suffix}]"
@@ -490,8 +509,14 @@ def datasource_color_style_block():
 # ------------------------------------------------------------------
 # 4) 워크시트 빌더
 # ------------------------------------------------------------------
-def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", mark_color=None):
-    """행=차원, 열=집계측정값 가로 막대 (가장 흔한 패턴)."""
+def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", mark_color=None, top_n=None):
+    """행=차원, 열=집계측정값 가로 막대 (가장 흔한 패턴).
+    top_n을 주면 해당 측정값 기준 내림차순 정렬 + 상위 N개만 남기는 필터를 건다 -
+    <computed-sort .../>(측정값 기준 정렬 - 2026.2 XSD 검증으로 옛 <sort class='computed'>
+    문법은 신형에서 안 쓰인다는 게 확인됨) + <filter>의 중첩 groupfilter
+    function='end'(top-N) > function='order'(정렬 기준) > function='level-members'
+    (member 소스) 구조. 참고 자료/필터 예시.twbx에서 확인된 Top-N Set(그룹) 구조를
+    워크시트 단독 필터로 단순화해서 재사용(미검증 변형 - Set 래퍼 없이 직접 필터에 적용)."""
     dci = col_instance(dim, "None")
     mci = col_instance(meas, meas_agg)
     cis = [dci, mci]
@@ -504,6 +529,20 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
     cis.extend(filt_cis)
     deps = datasource_dependencies(cis, sheet_name=name)
     style_block = worksheet_style_block(mark_color=mark_color, hide_label_fields=[dci['qualified']])
+    sort_xml = ""
+    topn_filter_xml = ""
+    if top_n:
+        sort_xml = f"          <computed-sort column='{dci['qualified']}' direction='DESC' using='{mci['qualified']}' />\n"
+        agg_expr = f"{meas_agg.upper()}([{field_ref(meas)}])"
+        topn_filter_xml = (
+            f"          <filter class='categorical' column='{dci['qualified']}'>\n"
+            f"            <groupfilter count='{top_n}' end='top' function='end' units='records'>\n"
+            f"              <groupfilter direction='DESC' expression='{agg_expr}' function='order'>\n"
+            f"                <groupfilter function='level-members' level='{dci['inst_name']}' user:ui-enumeration='all' user:ui-marker='enumerate' />\n"
+            f"              </groupfilter>\n"
+            f"            </groupfilter>\n"
+            f"          </filter>\n"
+        )
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -515,7 +554,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
 {deps}
           </datasource-dependencies>
 {PARAMETERS_DEP_BLOCK}
-{filters_xml}
+{topn_filter_xml}{sort_xml}{filters_xml}
 {slices_xml}
           <aggregation value='true' />
         </view>
@@ -621,12 +660,15 @@ def ws_dual_axis(name, dim, meas_bar, meas_bar_agg, meas_line, meas_line_agg, ba
     mark class)을 추가. 실물 예시는 색상을 Measure Names 인코딩으로 나눴지만, 우리는
     막대/라인이 애초에 서로 다른 pane이라 각 pane 자체의 style-rule에 고정 mark-color를
     거는 것만으로 충분(더 단순하고 검증된 mark-color 패턴 재사용)."""
-    dci = col_instance(dim, "None")
+    # 상단에 연도, 하단에 월 머리글이 보이도록 2단 날짜 계층을 <cols>에 그대로 둠(다른
+    # 차트들과 달리 이 워크시트는 머리글을 숨기지 않음 - 사용자가 명시적으로 요청).
+    year_ci = col_instance(dim, "Year")
+    month_ci = col_instance(dim, "Month")
     bar_ci = col_instance(meas_bar, meas_bar_agg)
     line_ci = col_instance(meas_line, meas_line_agg)
     filt_cis, filters_xml, slices_xml = common_filter_block()
-    deps = datasource_dependencies([dci, bar_ci, line_ci] + filt_cis, sheet_name=name)
-    style_block = worksheet_style_block(hide_label_fields=[dci['qualified']])
+    deps = datasource_dependencies([year_ci, month_ci, bar_ci, line_ci] + filt_cis, sheet_name=name)
+    style_block = worksheet_style_block()
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -677,7 +719,7 @@ def ws_dual_axis(name, dim, meas_bar, meas_bar_agg, meas_line, meas_line_agg, ba
           </pane>
         </panes>
         <rows>({line_ci['qualified']} + {bar_ci['qualified']})</rows>
-        <cols>{dci['qualified']}</cols>
+        <cols>{year_ci['qualified']} {month_ci['qualified']}</cols>
       </table>
     </worksheet>"""
 
@@ -841,12 +883,12 @@ add("1_KPI_3M", ws_kpi_text("1_KPI_3M", "KPILast3MCard"))
 add("1_KPI_6M", ws_kpi_text("1_KPI_6M", "KPILast6MCard"))
 add("1_KPI_12M", ws_kpi_text("1_KPI_12M", "KPILast12MCard"))
 add("1_KPI_All", ws_kpi_text("1_KPI_All", "KPIAllCard", mark_color="#ffffff"))
-add("1_Trend", ws_dual_axis("1_Trend", "OccurrenceMonth", "claim_id", "Count", "claim_amount_usd", "Sum",
+add("1_Trend", ws_dual_axis("1_Trend", "occurrence_date", "claim_id", "Count", "claim_amount_usd", "Sum",
                              bar_color=GRAY_BAR, line_color=NAVY))
 add("1_Map", ws_map("1_Map"))
-add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd", mark_color=NAVY_2))
-add("1_Top5_Defect", ws_simple_bar("1_Top5_Defect", "defect_type_en", "claim_amount_usd", mark_color=NAVY_2))
-add("1_Top5_Plant", ws_simple_bar("1_Top5_Plant", "production_plant", "claim_amount_usd", mark_color=NAVY_2))
+add("1_Top5_Customer", ws_simple_bar("1_Top5_Customer", "customer", "claim_amount_usd", mark_color=NAVY_2, top_n=5))
+add("1_Top5_Defect", ws_simple_bar("1_Top5_Defect", "defect_type_en", "claim_amount_usd", mark_color=NAVY_2, top_n=5))
+add("1_Top5_Plant", ws_simple_bar("1_Top5_Plant", "production_plant", "claim_amount_usd", mark_color=NAVY_2, top_n=5))
 
 # Page 2
 for i, cat in enumerate(CATEGORIES, start=1):
@@ -879,10 +921,10 @@ TITLE_COLOR = "#16324F"
 
 
 def captioned(caption, node, cap_h=1, body_h=9):
-    """차트 위에 작은 캡션(예: '월별 클레임 건수·금액 추이')을 붙인다 - 기획안의
-    .card h2 캡션 문구 재현. 워크시트 자체 제목(show-title)은 계속 숨긴 채, 별도
-    text zone으로 캡션만 보여줌."""
-    return ("vert", [W(cap_h, ("text", caption, 13, TITLE_COLOR)), W(body_h, node)])
+    """차트 위에 작은 캡션(예: '월별 클레임 건수·금액 추이')을 붙이고, 캡션+차트 전체를
+    기획안의 .card(흰 배경, 옅은 테두리)로 감싼다. 워크시트 자체 제목(show-title)은 계속
+    숨긴 채, 별도 text zone으로 캡션만 보여줌."""
+    return ("vert", [W(cap_h, ("text", caption, 13, TITLE_COLOR)), W(body_h, node)], {"style": "card"})
 
 
 def title_row(text):
@@ -966,16 +1008,17 @@ DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name i
 
 def gnb_column(current_dash):
     """좌측 메뉴바(GNB) - 대시보드 기획안.html의 .sidebar 구조·폰트·색상 그대로 재현:
-    (로고 대신) "SL Corporation" 워드마크 + "Quality Claims Dashboard" 태그라인(.brand-tagline과
-    동일하게 남색-2/굵게) + 대시보드별 이동 항목(활성/비활성 대비) + 하단 캡션(.sidebar-mini-foot).
-    대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성 스타일."""
-    brand = W(6, ("text", "SL Corporation", 15, TITLE_COLOR))
+    로고 이미지(.brand-logo) + "Corporation"(.brand-corp) + "Quality Claims Dashboard"
+    태그라인(.brand-tagline) + 대시보드별 이동 항목(활성/비활성 대비) + 하단 캡션
+    (.sidebar-mini-foot). 대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성."""
+    logo = W(6, ("logo",))
+    corp = W(3, ("text", "Corporation", 9, MUTED))
     tagline = W(4, ("text", "Quality Claims Dashboard", 10, NAVY_2))
     spacer = W(2, ("empty",))
     buttons = [W(3, ("navbutton", n, n == current_dash)) for n in DASH_NAMES]
-    filler = W(65, ("empty",))
+    filler = W(62, ("empty",))
     footer = W(4, ("text", "Synthetic Data", 9, MUTED))
-    return ("vert", [brand, tagline, spacer] + buttons + [filler, footer])
+    return ("vert", [logo, corp, tagline, spacer] + buttons + [filler, footer])
 
 
 # 최종 페이지 트리 = 좌측 GNB(고정 폭) + 기존 콘텐츠(나머지 폭). 실물 파일의 "GNB 컬럼 +
@@ -989,7 +1032,7 @@ PAGE_LAYOUTS = {
 def flatten_leaves(node):
     if node[0] == "leaf":
         return [node[1]]
-    if node[0] in ("text", "paramctrl", "navbutton", "empty", "filterctrl"):
+    if node[0] in ("text", "paramctrl", "navbutton", "empty", "filterctrl", "logo"):
         return []
     out = []
     for child in node[1]:
@@ -1020,6 +1063,7 @@ OUTER_ZONE_STYLE = """          <zone-style>
             <format attr='border-style' value='none' />
             <format attr='border-width' value='0' />
             <format attr='margin' value='8' />
+            <format attr='background-color' value='#f2f4f7' />
           </zone-style>"""
 
 # 기획안 .kpi-card CSS(흰 배경, 옅은 테두리, 둥근 모서리) 재현 - KPI 카드 5개 중 "전체(3개년)"만
@@ -1152,6 +1196,21 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         style = "\n" + ZONE_STYLE if with_style else ""
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
+    if kind == "logo":
+        # 실물 파일(참고 자료/태블로 예시.twbx)의 type-v2='bitmap' 구조 재현. 원본은
+        # twbx 패키지 안의 상대경로(param='Image/파일명')였지만, 여기선 .twb 단일 파일이라
+        # 컴퓨터 절대경로로 대체 시도(검증 안 됨 - 실패하면 실물 오류로 원인 파악 예정).
+        zid = id_gen()
+        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' is-scaled='1' param='{LOGO_PATH_ABS}' "
+                f"type-v2='bitmap' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <zone-style>\n"
+                f"              <format attr='border-color' value='#000000' />\n"
+                f"              <format attr='border-style' value='none' />\n"
+                f"              <format attr='border-width' value='0' />\n"
+                f"              <format attr='margin' value='4' />\n"
+                f"            </zone-style>\n"
+                f"          </zone>")
+
     if kind == "navbutton":
         # 실제 원인 확정(2025-08-20): <button>/window <simple-id>가 6번 연속 거부된 진짜 이유는
         # zone 구조가 아니라, 워크북 최상위 <document-format-change-manifest>가 비어 있었기
@@ -1211,10 +1270,12 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
             parts.append(render_layout(child, id_gen, with_style, x + pos, y, ch_w, h, sheet_zone_ids, "horz", reuse_ids))
             pos += ch_w
     inner_xml = "\n".join(parts)
-    style = "\n" + ZONE_STYLE if with_style else ""
-    # node에 3번째 요소로 {"fixed_size": N} 같은 override dict가 있으면, 비중 계산 대신
-    # 그 픽셀값을 그대로 fixed-size에 사용 (예: KPI 카드 행 높이를 정확히 200px로 고정).
+    # node에 3번째 요소로 {"fixed_size": N, "style": "card"} 같은 override dict가 있으면,
+    # 비중 계산 대신 그 픽셀값을 fixed-size에 쓰고(예: KPI 카드 행 높이를 정확히 200px로 고정),
+    # zone-style도 LEAF_ZONE_STYLES에서 골라 씀(예: 캡션+차트를 한 카드 테두리로 묶기).
     opts = node[2] if len(node) > 2 and isinstance(node[2], dict) else {}
+    zone_style_xml = LEAF_ZONE_STYLES.get(opts.get("style"), ZONE_STYLE)
+    style = "\n" + zone_style_xml if with_style else ""
     return f"""        <zone{fixed_attrs(opts.get("fixed_size"))} h='{h}' id='{cid}' param='{kind}' type-v2='layout-flow' w='{w}' x='{x}' y='{y}'>
 {inner_xml}{style}
         </zone>"""
@@ -1374,6 +1435,9 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
     </datasource>
 {build_parameters_datasource()}
   </datasources>
+  <mapsources>
+    <mapsource name='Tableau' />
+  </mapsources>
   <worksheets>
 {WORKSHEETS_XML}
   </worksheets>
