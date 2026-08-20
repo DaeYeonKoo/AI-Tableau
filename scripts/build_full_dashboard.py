@@ -38,6 +38,7 @@ SL_Corporation_Quality_Claims.twb 생성 스크립트 (Tableau Desktop 2025.3 �
 import os
 import uuid
 import tempfile
+import base64
 import urllib.request
 import urllib.parse
 
@@ -162,7 +163,21 @@ CALC_FIELDS = [
     # 필터 예시.twbx의 'Reset' 워크시트가 쓰는 것과 동일한 패턴 - 이 자체는 아무 필터 로직도
     # 없고, 클릭했을 때 workbook-level <action>(tsc:tsl-filter)이 실제 초기화를 수행한다.
     ("ResetLabel", "Reset", "string", "dimension", "nominal", '"필터 초기화"'),
+    # Top5 차트의 순위 번호 라벨 + 1위 강조색용 계산식. 사용자의 실제 TableauTemp 임시 파일들
+    # (구다이글로벌_Test.twb 등)에서 확인된 진짜 구조를 그대로 재현 - RANK_UNIQUE()/RANK()
+    # 둘 다 테이블 계산(table-calc)이라 <calculation>에 <table-calc ordering-type='Rows' />
+    # 자식이 필요(TABLE_CALC_REFS로 표시, build_base_columns()/instance_xml() 참고). 현재
+    # top_n을 쓰는 3개 차트(1_Top5_*)가 전부 claim_amount_usd Sum 기준이라 하나로 공유.
+    ("Top5Rank", "Top5 Rank", "integer", "measure", "quantitative",
+     "RANK_UNIQUE(SUM([claim_amount_usd]))"),
+    ("Top5IsTop1", "Top5 Is Top1", "boolean", "dimension", "nominal",
+     "RANK_UNIQUE(SUM([claim_amount_usd])) = 1"),
 ]
+
+# RANK_UNIQUE()류 table-calc를 품은 계산식 - <calculation>과 그 필드를 쓰는 <column-instance>
+# 양쪽에 <table-calc ordering-type='...' /> 자식이 필요(실물 확인, 아래 build_base_columns()/
+# instance_xml() 참고).
+TABLE_CALC_REFS = {"Top5Rank", "Top5IsTop1"}
 
 # 1페이지 KPI 카드 5개(최근1/3/6/12개월 + 전체)용 조건부 계산식. 실제 <filter> XML은 아직
 # 검증 안 된 영역이라(대시보드 요구사항.md 리스크) 우회 - IF로 기간 밖 값을 NULL 처리한 뒤
@@ -240,7 +255,7 @@ KPI_CARD_DEPS["KPIAllCard"] = ["claim_id", "claim_amount_usd"]
 # 아니라 'User'(접두사 'usr')여야 함 - 그동안 'None'으로 잘못 선언했던 게 마크가 계속 빨간
 # 오류로 표시됐던 진짜 원인. (반대로 DateRangeFilter처럼 집계를 전혀 안 쓰는 계산식은 'None'이
 # 맞고, 실제로 그쪽은 처음부터 정상 동작했음.)
-SELF_AGGREGATING_CALC_REFS = {f"Calculation_{k}" for k in KPI_CARD_DEPS}
+SELF_AGGREGATING_CALC_REFS = {f"Calculation_{k}" for k in KPI_CARD_DEPS} | {f"Calculation_{r}" for r in TABLE_CALC_REFS}
 
 # 필드 레지스트리: name -> (datatype, role, type)  (raw + calc 통합)
 FIELD_TYPES = {name: (dtype, role, ftype) for name, dtype, role, ftype in COLUMNS}
@@ -295,10 +310,21 @@ def build_base_columns():
         )
     for internal, caption, dtype, role, ftype, formula in CALC_FIELDS:
         f_escaped = formula.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;").replace('"', "&quot;")
+        if internal in TABLE_CALC_REFS:
+            # RANK_UNIQUE() 등 table-calc 함수를 쓰는 계산식은 실물 확인된 대로
+            # <calculation> 자식에 <table-calc ordering-type='Rows' /> 필요(우리 레이아웃은
+            # 순위 매기는 차원이 <rows>에 있으므로 Rows).
+            calc_xml = (
+                f"      <calculation class='tableau' formula='{f_escaped}'>\n"
+                f"        <table-calc ordering-type='Rows' />\n"
+                f"      </calculation>\n"
+            )
+        else:
+            calc_xml = f"      <calculation class='tableau' formula='{f_escaped}' />\n"
         parts.append(
             f"    <column caption='{caption}' datatype='{dtype}' name='[Calculation_{internal}]' "
             f"role='{role}' type='{ftype}'>\n"
-            f"      <calculation class='tableau' formula='{f_escaped}' />\n"
+            f"{calc_xml}"
             f"    </column>"
         )
     return "\n".join(parts)
@@ -384,7 +410,18 @@ def base_column_xml(ref):
     return f"            <column caption='{caption_of(ref)}' datatype='{dtype}' name='[{ref}]' role='{role}' type='{ftype}' />"
 
 
+TABLE_CALC_FIELD_REFS = {f"Calculation_{r}" for r in TABLE_CALC_REFS}
+
+
 def instance_xml(ci):
+    if ci["ref"] in TABLE_CALC_FIELD_REFS:
+        # 실물 확인: 이 필드를 쓰는 워크시트의 <column-instance>에도 자기만의
+        # <table-calc ordering-type='Rows' /> 자식이 따로 필요함(계산식 자체의 table-calc와는
+        # 별개 - 그 뷰에서 이 필드가 실제로 어느 축을 따라 파티션되는지를 나타냄).
+        return (f"            <column-instance column='[{ci['ref']}]' derivation='{ci['derivation']}' "
+                f"name='{ci['inst_name']}' pivot='key' type='{ci['ftype']}'>\n"
+                f"              <table-calc ordering-type='Rows' />\n"
+                f"            </column-instance>")
     return (f"            <column-instance column='[{ci['ref']}]' derivation='{ci['derivation']}' "
             f"name='{ci['inst_name']}' pivot='key' type='{ci['ftype']}' />")
 
@@ -505,13 +542,24 @@ def worksheet_style_block(mark_color=None, hide_label_fields=None, show_headers=
     return "        <style>\n" + "\n".join(rules) + "\n        </style>"
 
 
+RESET_SHAPE_NAME = "SL_Dashboard/Reset.png"
+
+
 def datasource_color_style_block():
     """카테고리 값별 커스텀 색상(예: severity Critical=빨강)은 워크시트가 아니라 데이터소스의
     <style><style-rule element='mark'><encoding attr='color' field='[none:필드:nk]'
     type='palette'><map to='#hex'><bucket>&quot;값&quot;</bucket></map>...</encoding></style-rule>
     구조로 선언되는 것을 실제 공개 .twb 예시(berkayalan/Tableau-Tutorials, Section2.twb의
     Region 필드 색상 지정부)로 확인 - 대시보드 기획안.html의 STATUS_COLOR/SEV_COLOR 값을 그대로
-    이식. field= 값은 워크시트 shelf 참조와 달리 데이터소스 접두사 없는 bare 형태."""
+    이식. field= 값은 워크시트 shelf 참조와 달리 데이터소스 접두사 없는 bare 형태.
+
+    2025-08-20 사용자의 실제 Tableau 임시 파일들(TableauTemp)에서 커스텀 도형(이미지) 마크의
+    진짜 구조를 확인 - 색상 팔레트와 완전히 동일한 패턴: 데이터소스 레벨 <encoding attr='shape'
+    type='shape'><map to='폴더/파일.png'>...로 선언하고, 워크시트에서는 그 필드를 Shape
+    shelf(<shape column=.../>)에 얹기만 하면 됨. 이미지 자체는 <external><shapes>에 base64로
+    임베드(별도 함수 build_external_shapes() 참고) - 로컬 Shapes 리포지토리 폴더 존재 여부와
+    무관하게 워크북 안에 그대로 담기는 방식이라 이 필드도 datasource_color_style_block()에
+    포함시킴(필터 초기화 버튼의 Reset.png 도형)."""
     def one_rule(field_name, color_map):
         cci = col_instance(field_name, "None")
         maps = "\n".join(
@@ -525,8 +573,58 @@ def datasource_color_style_block():
             "          </encoding>\n"
             "        </style-rule>"
         )
-    rules = [one_rule("claim_status", STATUS_COLOR_MAP), one_rule("severity", SEVERITY_COLOR_MAP)]
+
+    def shape_rule():
+        rci = col_instance("ResetLabel", "None")
+        return (
+            "        <style-rule element='mark'>\n"
+            f"          <encoding attr='shape' field='{rci['inst_name']}' type='shape'>\n"
+            f"            <map to='{RESET_SHAPE_NAME}'>\n"
+            "              <bucket>&quot;필터 초기화&quot;</bucket>\n"
+            "            </map>\n"
+            "          </encoding>\n"
+            "        </style-rule>"
+        )
+
+    def top1_color_rule():
+        # Top5 차트: 1위만 강조색, 2~5위는 연한 회색. 사용자의 실제 TableauTemp 파일에서
+        # 확인된 boolean 계산식 색상 매핑 그대로(불리언이라 bucket 값에 따옴표 없음).
+        tci = col_instance("Top5IsTop1", "None")
+        return (
+            "        <style-rule element='mark'>\n"
+            f"          <encoding attr='color' field='{tci['inst_name']}' type='palette'>\n"
+            f"            <map to='{NAVY_2}'>\n              <bucket>true</bucket>\n            </map>\n"
+            f"            <map to='#c9d0da'>\n              <bucket>false</bucket>\n            </map>\n"
+            "          </encoding>\n"
+            "        </style-rule>"
+        )
+    rules = [one_rule("claim_status", STATUS_COLOR_MAP), one_rule("severity", SEVERITY_COLOR_MAP),
+             shape_rule(), top1_color_rule()]
     return "      <style>\n" + "\n".join(rules) + "\n      </style>"
+
+
+def build_external_shapes():
+    """<external><shapes> 블록 - 커스텀 도형 이미지를 base64로 워크북에 직접 임베드.
+    2025-08-20 실물 확인(사용자의 실제 TableauTemp 임시 파일들, 구다이글로벌_Test.twb 등):
+    <shape name='폴더/파일.png'>(base64)</shape> 형태로, name=이 datasource 스타일의
+    <map to='...'>와 정확히 같은 문자열이어야 매칭됨. 워크북 최상위에서 <windows> 다음,
+    </workbook> 바로 앞에 위치(2026.2 기준 XSD가 "missing child - expected one of (datagraph,
+    thumbnails, external, ...)"라고 계속 알려주던 것과도 일치 - <external>이 실제로 유효한
+    workbook 최상위 자식임을 재확인)."""
+    reset_png_path = r"c:\Users\milvus-Tom\.claude\Project\AI-Tableau\대시보드\assets\Reset.png"
+    with open(reset_png_path, "rb") as f:
+        raw = f.read()
+    b64 = base64.b64encode(raw).decode("ascii")
+    wrapped = "\n".join(b64[i:i + 76] for i in range(0, len(b64), 76))
+    return (
+        "  <external>\n"
+        "    <shapes>\n"
+        f"      <shape name='{RESET_SHAPE_NAME}'>\n"
+        f"{wrapped}\n"
+        "      </shape>\n"
+        "    </shapes>\n"
+        "  </external>"
+    )
 
 
 # ------------------------------------------------------------------
@@ -556,14 +654,27 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
         cci = col_instance(color_dim, "None")
         cis.append(cci)
         color_xml = f"\n              <color column='{cci['qualified']}' />"
+    rank_xml = ""
+    if top_n:
+        # 2025-08-20 사용자 요청: 순위 번호를 막대 라벨로 보여주고(rank_ci), 1위만 강조색/
+        # 나머지는 회색으로 칠함(top1_ci) - 둘 다 RANK_UNIQUE() table-calc 계산식
+        # (Top5Rank/Top5IsTop1, TABLE_CALC_REFS). 색상 매핑 자체는 datasource_color_style_block()
+        # 의 top1_color_rule()에 있고, 여기서는 그 필드를 <color>/<text> shelf에 얹기만 함 -
+        # claim_status/severity 커스텀 팔레트와 동일한 2단 구조.
+        rank_ci = col_instance("Top5Rank", "None")
+        top1_ci = col_instance("Top5IsTop1", "None")
+        cis.extend([rank_ci, top1_ci])
+        color_xml = f"\n              <color column='{top1_ci['qualified']}' />"
+        rank_xml = f"\n              <text column='{rank_ci['qualified']}' />"
     filt_cis, filters_xml, slices_xml = common_filter_block(exclude={dim} if top_n else None)
     cis.extend(filt_cis)
     deps = datasource_dependencies(cis, sheet_name=name)
     if top_n:
-        # 2025-08-20 사용자 요청: Top5 차트는 머리글(고객사/불량유형/생산공장 이름)을 보여주고,
-        # 막대가 "너무 두꺼워" 보이지 않도록 mark 크기를 줄임(실물 확인된 <format attr='size'>
-        # 패턴 - 지도 워크시트의 Circle 마크 크기 조정과 동일한 속성, Bar 마크에도 적용됨).
-        style_block = worksheet_style_block(mark_color=mark_color, show_headers=True)
+        # Top5 차트는 머리글(고객사/불량유형/생산공장 이름)을 보여주고, 막대가 "너무 두꺼워"
+        # 보이지 않도록 mark 크기를 줄임(실물 확인된 <format attr='size'> 패턴 - 지도 워크시트의
+        # Circle 마크 크기 조정과 동일한 속성, Bar 마크에도 적용됨). 색은 이제 mark_color 단색이
+        # 아니라 top1_ci 기반 <color> 인코딩이 결정하므로 mark_color는 넘기지 않음.
+        style_block = worksheet_style_block(show_headers=True)
         style_block = style_block.replace(
             "        </style>",
             "          <style-rule element='mark'>\n"
@@ -608,7 +719,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
               <breakdown value='auto' />
             </view>
             <mark class='{mark}' />
-            <encodings>{color_xml}
+            <encodings>{color_xml}{rank_xml}
             </encodings>
           </pane>
         </panes>
@@ -973,12 +1084,20 @@ def ws_map(name):
 
 
 def ws_reset(name):
-    """필터 초기화 버튼. 참고 자료/필터 예시.twbx의 'Reset' 워크시트(텍스트 계산식 하나를
-    Text 마크로 올린 빈 뷰, <filter> 없음) 구조를 그대로 재현 - 이 워크시트 자체는 아무 필터도
-    갖지 않고, 대시보드에 배치된 뒤 클릭하면 workbook-level <action>(tsc:tsl-filter)이 발동해
-    customer/production_plant/part_category 필터를 전부 '전체 선택'으로 되돌린다. 날짜범위
-    (시작일/종료일 매개변수)는 이 매커니즘(필터 ~na 초기화)으로는 초기화되지 않음 - 매개변수는
-    필터가 아니라서 별도 확인 필요(대시보드 요구사항 목록 7번 관련 리스크)."""
+    """필터 초기화 버튼. 참고 자료/필터 예시.twbx의 'Reset' 워크시트(빈 뷰, <filter> 없음)
+    구조는 유지 - 이 워크시트 자체는 아무 필터도 갖지 않고, 대시보드에 배치된 뒤 클릭하면
+    workbook-level <action>(tsc:tsl-filter)이 발동해 customer/production_plant/part_category
+    필터를 전부 '전체 선택'으로 되돌린다. 날짜범위(시작일/종료일 매개변수)는 이 매커니즘
+    (필터 ~na 초기화)으로는 초기화되지 않음 - 매개변수는 필터가 아니라서 별도 확인 필요.
+
+    2025-08-20 사용자 요청으로 마크를 Text에서 Shape로 교체 - 사용자가 첨부한 Reset.png를
+    실제 도형(이미지)으로 표시. 사용자의 실제 TableauTemp 임시 파일들(구다이글로벌_Test.twb 등)
+    에서 확인된 진짜 커스텀 도형 구조를 그대로 재현: 데이터소스 레벨에 <encoding attr='shape'
+    type='shape'><map to='폴더/파일.png'>...(datasource_color_style_block()의 shape_rule())로
+    도형-값 매핑을 선언해두고, 이 워크시트는 그 필드를 <shape column=.../>로 Shape shelf에
+    얹기만 하면 됨 - 마크 크기가 마음대로 안 커지도록 <mark-sizing marks-scaling-off/>도
+    실물 그대로 추가. 실제 이미지 바이트는 build_external_shapes()가 워크북 최상위
+    <external><shapes>에 base64로 임베드."""
     rci = col_instance("ResetLabel", "None")
     deps = datasource_dependencies([rci], sheet_name=name)
     return f"""    <worksheet name='{name}'>
@@ -1005,9 +1124,10 @@ def ws_reset(name):
             <view>
               <breakdown value='auto' />
             </view>
-            <mark class='Text' />
+            <mark class='Shape' />
+            <mark-sizing mark-sizing-setting='marks-scaling-off' />
             <encodings>
-              <text column='{rci['qualified']}' />
+              <shape column='{rci['qualified']}' />
             </encodings>
             <style>
               <style-rule element='cell'>
@@ -1689,6 +1809,7 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
   <windows>
 {WINDOWS_XML}
   </windows>
+{build_external_shapes()}
 </workbook>
 """
 
