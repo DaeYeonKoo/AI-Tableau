@@ -669,6 +669,11 @@ def ws_dual_axis(name, dim, meas_bar, meas_bar_agg, meas_line, meas_line_agg, ba
     거는 것만으로 충분(더 단순하고 검증된 mark-color 패턴 재사용)."""
     # 상단에 연도, 하단에 월 머리글이 보이도록 2단 날짜 계층을 <cols>에 그대로 둠(다른
     # 차트들과 달리 이 워크시트는 머리글을 숨기지 않음 - 사용자가 명시적으로 요청).
+    # 2025-08-20 실물 오류(1_Trend, "잘못된 형식의 식: 연산자를 피연산자와 연결할 수 없음")로
+    # 확인: 같은 shelf에 여러 필드를 공백으로 나열하는 건 잘못된 문법 - 참고 자료 3종을 뜯은
+    # scratchpad/reference.twb(16144번째 줄 등)에서 실제 연/월 2단 계층이
+    # '([ds].[yr:field:ok] / [ds].[mn:field:ok])' 형태(괄호로 묶고 '/'로 연결)인 것을 확인해
+    # 그 문법으로 교체.
     year_ci = col_instance(dim, "Year")
     month_ci = col_instance(dim, "Month")
     bar_ci = col_instance(meas_bar, meas_bar_agg)
@@ -726,7 +731,7 @@ def ws_dual_axis(name, dim, meas_bar, meas_bar_agg, meas_line, meas_line_agg, ba
           </pane>
         </panes>
         <rows>({line_ci['qualified']} + {bar_ci['qualified']})</rows>
-        <cols>{year_ci['qualified']} {month_ci['qualified']}</cols>
+        <cols>({year_ci['qualified']} / {month_ci['qualified']})</cols>
       </table>
     </worksheet>"""
 
