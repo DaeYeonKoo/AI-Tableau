@@ -850,22 +850,42 @@ def ws_kpi_text(name, card_field, mark_color=None):
 
 def ws_map(name):
     """claim_country 기준 버블맵 - Tableau 자동 생성 위경도 필드 사용.
-    2025-08-20 실물 확인(사용자 스크린샷: 배경 지도 없이 원만 흰 배경 위에 표시됨) - 참고
+    2025-08-20 1차 실물 확인(사용자 스크린샷: 배경 지도 없이 원만 흰 배경 위에 표시됨) - 참고
     자료/필터 예시.twbx의 필채운 지도 워크시트('Sample - Superstore', Multipolygon 마크)에서
     <style-rule element='map-layer'>(개별 레이어 on/off) + <style-rule element='map'>
-    <format attr='washout'>(배경 지도 불투명도, 0.0=완전히 보임) 블록을 발견 - 이게 없으면
-    배경 타일 레이어 자체가 비활성 상태로 저장되는 것으로 추정. 동일한 레이어 on/off 값을
-    그대로 재사용(도로/토지피복/국가경계/주(州)경계 on, 해안선/카운티/우편번호 등은 off)."""
-    lat = col_instance("Latitude (generated)", "None")
-    lon = col_instance("Longitude (generated)", "None")
+    <format attr='washout'>(배경 지도 불투명도, 0.0=완전히 보임) 블록을 추가했지만 2차 확인에서도
+    여전히 배경 지도가 안 보임 - 사용자가 제공한 참고 자료/지도 예시.twbx(실제 배경지도가
+    보이는 Circle 마크 버블맵, 'Coronavirus Map US counties.twb')를 뜯어 대조한 결과, 우리
+    파일에 없던 두 가지를 추가로 발견:
+      1) 워크북 최상위뿐 아니라 워크시트 개별 <view> 안에도 <mapsources><mapsource
+         name='Tableau' /></mapsources>가 있음 - 모든 지도 워크시트에서 예외 없이 확인됨.
+      2) <style>에 <style-rule element='axis'>로 위경도 축의 Web Mercator(EPSG:3857) 투영
+         범위(min/max)를 명시하는 <encoding attr='space' .../> 2개(각각 scope='cols'=경도,
+         scope='rows'=위도)가 있음 - 이게 없으면 초기 확대/이동 상태를 몰라 빈 화면으로
+         뜨는 것으로 추정. 정확한 데이터 범위를 모르니 EPSG:3857 정의상의 전체 세계 범위
+         (±20037508.342789244, 정사각형)를 그대로 사용 - 값 자체는 투영 정의상 항상 유효해서
+         로드 에러 위험은 없고, 실제 표시되는 확대/이동 정도만 사용자가 나중에 조정하면 됨.
+      3) 지도 예시.twbx의 어떤 워크시트도 Latitude/Longitude (generated)를
+         datasource-dependencies에 <column>이나 <column-instance>로 선언하지 않음 - <rows>/
+         <cols>/<style-rule element='axis'>에서 그냥 '[데이터소스].[Latitude (generated)]'
+         맨 이름 그대로 직접 참조함(우리가 여태 썼던 col_instance() 래핑된
+         '[none:Latitude (generated):qk]' 형태는 검증 안 된 우리 자신의 이전 추측이었음).
+         이번에 맨 이름 참조로 교체."""
+    lat_ref = f"[{DS_NAME}].[Latitude (generated)]"
+    lon_ref = f"[{DS_NAME}].[Longitude (generated)]"
     ctry = col_instance("claim_country", "None")
     mci = col_instance("claim_amount_usd", "Sum")
     filt_cis, filters_xml, slices_xml = common_filter_block()
-    deps = datasource_dependencies([lat, lon, ctry, mci] + filt_cis, sheet_name=name)
+    deps = datasource_dependencies([ctry, mci] + filt_cis, sheet_name=name)
+    world_extent = "20037508.342789244"
     style_block = """        <style>
           <style-rule element='header'>
             <format attr='display' scope='rows' value='false' />
             <format attr='display' scope='cols' value='false' />
+          </style-rule>
+          <style-rule element='axis'>
+            <encoding attr='space' class='0' field='%s' field-type='quantitative' max='%s' min='-%s' projection='EPSG:3857' range-type='fixed' scope='cols' type='space' />
+            <encoding attr='space' class='0' field='%s' field-type='quantitative' max='%s' min='-%s' projection='EPSG:3857' range-type='fixed' scope='rows' type='space' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='%s' />
@@ -896,7 +916,9 @@ def ws_map(name):
           <style-rule element='map'>
             <format attr='washout' value='0.0' />
           </style-rule>
-        </style>""" % NAVY_2
+        </style>""" % (lon_ref, world_extent, world_extent,
+                        lat_ref, world_extent, world_extent,
+                        NAVY_2)
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -904,6 +926,9 @@ def ws_map(name):
             <datasource caption='sl_corporation_quality_claims' name='{DS_NAME}' />
 {PARAMETERS_DS_REF}
           </datasources>
+          <mapsources>
+            <mapsource name='Tableau' />
+          </mapsources>
           <datasource-dependencies datasource='{DS_NAME}'>
 {deps}
           </datasource-dependencies>
@@ -925,8 +950,8 @@ def ws_map(name):
             </encodings>
           </pane>
         </panes>
-        <rows>{lat['qualified']}</rows>
-        <cols>{lon['qualified']}</cols>
+        <rows>{lat_ref}</rows>
+        <cols>{lon_ref}</cols>
       </table>
     </worksheet>"""
 
