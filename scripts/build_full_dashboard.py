@@ -517,11 +517,13 @@ def datasource_color_style_block():
 def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", mark_color=None, top_n=None):
     """행=차원, 열=집계측정값 가로 막대 (가장 흔한 패턴).
     top_n을 주면 해당 측정값 기준 내림차순 정렬 + 상위 N개만 남기는 필터를 건다 -
-    <computed-sort .../>(측정값 기준 정렬 - 2026.2 XSD 검증으로 옛 <sort class='computed'>
-    문법은 신형에서 안 쓰인다는 게 확인됨) + <filter>의 중첩 groupfilter
+    <sort class='computed' .../>(측정값 기준 정렬) + <filter>의 중첩 groupfilter
     function='end'(top-N) > function='order'(정렬 기준) > function='level-members'
     (member 소스) 구조. 참고 자료/필터 예시.twbx에서 확인된 Top-N Set(그룹) 구조를
-    워크시트 단독 필터로 단순화해서 재사용(미검증 변형 - Set 래퍼 없이 직접 필터에 적용)."""
+    워크시트 단독 필터로 단순화해서 재사용(미검증 변형 - Set 래퍼 없이 직접 필터에 적용).
+    2025-08-20 실물 오류(D2E8DA72)로 확인: 2026.2 참고 XSD의 <computed-sort> 전용 원소는
+    설치된 2025.3에는 아직 없음 - 2025.3의 실제 content model은 여전히 'sort' 원소를
+    기대함('...,filter,sort,perspectives,...'). class='computed' 문법으로 되돌림."""
     dci = col_instance(dim, "None")
     mci = col_instance(meas, meas_agg)
     cis = [dci, mci]
@@ -537,7 +539,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
     sort_xml = ""
     topn_filter_xml = ""
     if top_n:
-        sort_xml = f"          <computed-sort column='{dci['qualified']}' direction='DESC' using='{mci['qualified']}' />\n"
+        sort_xml = f"          <sort class='computed' column='{dci['qualified']}' direction='DESC' using='{mci['qualified']}' />\n"
         agg_expr = f"{meas_agg.upper()}([{field_ref(meas)}])"
         topn_filter_xml = (
             f"          <filter class='categorical' column='{dci['qualified']}'>\n"
