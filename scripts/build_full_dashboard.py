@@ -471,7 +471,7 @@ STATUS_COLOR_MAP = {"접수": "#d98c1f", "조사중": "#e2a53a", "확정": "#1f4
 SEVERITY_COLOR_MAP = {"Critical": "#c0392b", "Major": "#d98c1f", "Minor": "#7a8699"}
 
 
-def worksheet_style_block(mark_color=None, hide_label_fields=None):
+def worksheet_style_block(mark_color=None, hide_label_fields=None, show_headers=False):
     """모든 워크시트 공통으로 행/열 필드 머리글을 숨기고, 필요하면 단색 mark-color를 적용.
     (카테고리별 커스텀 팔레트는 워크시트가 아니라 데이터소스 레벨 스타일로 옮김 - 아래
     datasource_color_style_block() 및 그 주석 참고.)
@@ -480,13 +480,17 @@ def worksheet_style_block(mark_color=None, hide_label_fields=None):
     실제로는 "Occurrence Month"/"Customer" 같은 필드명 캡션이 계속 남아있는 게 확인됨)과,
     실물 파일(참고 자료/태블로 예시.twbx, worksheet 'Bunker Price_Header')에서 확인된 진짜
     메커니즘인 element='label' + field='[qualified]' + attr='display'=false(필드별 개별 토글)를
-    hide_label_fields로 받은 각 필드마다 추가. 후자가 실제로 이 문제를 해결하는 부분."""
-    rules = [
-        "          <style-rule element='header'>\n"
-        "            <format attr='display' scope='rows' value='false' />\n"
-        "            <format attr='display' scope='cols' value='false' />\n"
-        "          </style-rule>"
-    ]
+    hide_label_fields로 받은 각 필드마다 추가. 후자가 실제로 이 문제를 해결하는 부분.
+    show_headers=True면 이 전역 숨김 규칙 자체를 아예 안 붙임(2025-08-20 Top5 차트 요청:
+    고객사/불량유형/생산공장 이름이 실제로 보여야 함)."""
+    rules = []
+    if not show_headers:
+        rules.append(
+            "          <style-rule element='header'>\n"
+            "            <format attr='display' scope='rows' value='false' />\n"
+            "            <format attr='display' scope='cols' value='false' />\n"
+            "          </style-rule>"
+        )
     if hide_label_fields:
         label_formats = "\n".join(
             f"            <format attr='display' field='{f}' value='false' />" for f in hide_label_fields
@@ -555,7 +559,19 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
     filt_cis, filters_xml, slices_xml = common_filter_block(exclude={dim} if top_n else None)
     cis.extend(filt_cis)
     deps = datasource_dependencies(cis, sheet_name=name)
-    style_block = worksheet_style_block(mark_color=mark_color, hide_label_fields=[dci['qualified']])
+    if top_n:
+        # 2025-08-20 사용자 요청: Top5 차트는 머리글(고객사/불량유형/생산공장 이름)을 보여주고,
+        # 막대가 "너무 두꺼워" 보이지 않도록 mark 크기를 줄임(실물 확인된 <format attr='size'>
+        # 패턴 - 지도 워크시트의 Circle 마크 크기 조정과 동일한 속성, Bar 마크에도 적용됨).
+        style_block = worksheet_style_block(mark_color=mark_color, show_headers=True)
+        style_block = style_block.replace(
+            "        </style>",
+            "          <style-rule element='mark'>\n"
+            "            <format attr='size' value='0.55' />\n"
+            "          </style-rule>\n        </style>",
+        )
+    else:
+        style_block = worksheet_style_block(mark_color=mark_color, hide_label_fields=[dci['qualified']])
     sort_xml = ""
     topn_filter_xml = ""
     if top_n:
@@ -1169,13 +1185,15 @@ def gnb_column(current_dash):
     로고 이미지(.brand-logo) + 대시보드별 이동 항목(활성/비활성 대비) + 하단 캡션
     (.sidebar-mini-foot). 대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성.
     사용자 요청(2025-08-20)으로 "Corporation"/"Quality Claims Dashboard" 텍스트는 제거하고
-    로고 아래 여백만 조금 두고 바로 탐색 버튼이 오도록 단순화."""
+    로고 아래 여백만 조금 두고 바로 탐색 버튼이 오도록 단순화. GNB 컨테이너 배경은 기획안
+    .sidebar CSS(흰 배경 + 옅은 오른쪽 테두리)를 그대로 재현한 "gnb" 스타일 적용 - 지금까지는
+    배경 지정이 없어 대시보드 전체 배경(OUTER_ZONE_STYLE의 회색 #f2f4f7)이 그대로 비쳐 보였음."""
     logo = W(6, ("logo",))
     spacer = W(4, ("empty",))
     buttons = [W(3, ("navbutton", n, n == current_dash)) for n in DASH_NAMES]
     filler = W(63, ("empty",))
     footer = W(4, ("text", "Synthetic Data", 9, MUTED))
-    return ("vert", [logo, spacer] + buttons + [filler, footer])
+    return ("vert", [logo, spacer] + buttons + [filler, footer], {"style": "gnb"})
 
 
 # 최종 페이지 트리 = 좌측 GNB(고정 폭) + 기존 콘텐츠(나머지 폭). 실물 파일의 "GNB 컬럼 +
@@ -1251,7 +1269,17 @@ RESET_BTN_ZONE_STYLE = """            <zone-style>
               <format attr='background-color' value='#eef2f7' />
             </zone-style>"""
 
-LEAF_ZONE_STYLES = {"card": CARD_ZONE_STYLE, "card-hl": CARD_HIGHLIGHT_ZONE_STYLE, "reset-btn": RESET_BTN_ZONE_STYLE}
+# 기획안 .sidebar CSS(흰 배경 + 옅은 오른쪽 테두리) 재현 - GNB 세로 컨테이너 전체에 적용.
+GNB_ZONE_STYLE = """            <zone-style>
+              <format attr='border-color-right' value='#e2e6ec' />
+              <format attr='border-style-right' value='solid' />
+              <format attr='border-width-right' value='1' />
+              <format attr='margin' value='0' />
+              <format attr='background-color' value='#ffffff' />
+            </zone-style>"""
+
+LEAF_ZONE_STYLES = {"card": CARD_ZONE_STYLE, "card-hl": CARD_HIGHLIGHT_ZONE_STYLE,
+                     "reset-btn": RESET_BTN_ZONE_STYLE, "gnb": GNB_ZONE_STYLE}
 
 
 DASHBOARD_ZONE_IDS = {}  # dash_name -> {sheet_name: zone_id} (desktop 기준) - window의 active/viewpoints에 재사용
