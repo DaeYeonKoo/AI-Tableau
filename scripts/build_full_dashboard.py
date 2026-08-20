@@ -821,6 +821,13 @@ worksheet_names = []
 
 
 def add(name, xml):
+    # <WindowsPersistSimpleIdentifiers/> 매니페스트 플래그를 켜면서 <worksheet>도
+    # (((layout-options?)|(repository-location?)),table,simple-id) - 즉 simple-id가
+    # 필수가 됨(2025-08-20 실물 오류로 확인). </table> 뒤에 자동으로 붙여줌 - ws_* 빌더
+    # 함수를 전부 고칠 필요 없이 등록 시점에 일괄 주입.
+    guid = "{" + str(uuid.uuid4()).upper() + "}"
+    assert xml.rstrip().endswith("</worksheet>"), f"unexpected worksheet XML tail for {name}"
+    xml = xml.rstrip()[: -len("</worksheet>")] + f"      <simple-id uuid='{guid}' />\n    </worksheet>"
     worksheet_blocks.append(xml)
     worksheet_names.append(name)
 
@@ -1223,6 +1230,10 @@ def build_dashboard(dash_name, layout_tree):
         </zone>"""
 
     DASHBOARD_ZONE_IDS[dash_name] = sheet_zone_ids
+    # <dashboard>도 <WindowsPersistSimpleIdentifiers/> 매니페스트 플래그 때문에 이제
+    # simple-id가 content model 필수 항목(2025-08-20 실물 오류로 확인) - devicelayouts
+    # 뒤에 추가.
+    dash_guid = "{" + str(uuid.uuid4()).upper() + "}"
     return f"""    <dashboard name='{dash_name}'>
       <style />
       <size maxheight='{DASH_H}' maxwidth='{DASH_W}' minheight='{DASH_H}' minwidth='{DASH_W}' sizing-mode='fixed' />
@@ -1237,6 +1248,7 @@ def build_dashboard(dash_name, layout_tree):
           </zones>
         </devicelayout>
       </devicelayouts>
+      <simple-id uuid='{dash_guid}' />
     </dashboard>"""
 
 

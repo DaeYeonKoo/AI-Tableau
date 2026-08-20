@@ -21,15 +21,15 @@
     </style-rule>
   </style>
   <datasources>
-    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.b24ae3f70f104fca9e97' version='18.1'>
+    <datasource caption='sl_corporation_quality_claims' inline='true' name='federated.a0685c38b72f430db334' version='18.1'>
       <connection class='federated'>
         <named-connections>
-          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.dc86d60143144fb09922'>
+          <named-connection caption='sl_corporation_quality_claims.csv' name='textscan.7341fff3486042a2b192'>
             <connection class='textscan' directory='c:/Users/milvus-Tom/.claude/Project/AI-Tableau/data' filename='sl_corporation_quality_claims.csv'
                         password='' server='' />
           </named-connection>
         </named-connections>
-        <relation connection='textscan.dc86d60143144fb09922' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
+        <relation connection='textscan.7341fff3486042a2b192' name='sl_corporation_quality_claims.csv' table='[sl_corporation_quality_claims#csv]' type='table' />
         <metadata-records>
         <metadata-record class='column'>
           <remote-name>claim_id</remote-name>
@@ -480,10 +480,10 @@
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -507,23 +507,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -540,22 +540,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.b24ae3f70f104fca9e97].[usr:Calculation_KPILast1MCard:nk]' />
+              <text column='[federated.a0685c38b72f430db334].[usr:Calculation_KPILast1MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
         <cols></cols>
       </table>
+          <simple-id uuid='{AE204311-C93A-4AFF-A37F-3020B0F92D3F}' />
     </worksheet>
     <worksheet name='1_KPI_3M'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -579,23 +580,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -612,22 +613,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.b24ae3f70f104fca9e97].[usr:Calculation_KPILast3MCard:nk]' />
+              <text column='[federated.a0685c38b72f430db334].[usr:Calculation_KPILast3MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
         <cols></cols>
       </table>
+          <simple-id uuid='{28BED1B7-6F49-4E23-A786-875A98F2CB90}' />
     </worksheet>
     <worksheet name='1_KPI_6M'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -651,23 +653,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -684,22 +686,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.b24ae3f70f104fca9e97].[usr:Calculation_KPILast6MCard:nk]' />
+              <text column='[federated.a0685c38b72f430db334].[usr:Calculation_KPILast6MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
         <cols></cols>
       </table>
+          <simple-id uuid='{3ED52251-DFEB-46EA-83E8-02CECF9295F3}' />
     </worksheet>
     <worksheet name='1_KPI_12M'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -723,23 +726,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -756,22 +759,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.b24ae3f70f104fca9e97].[usr:Calculation_KPILast12MCard:nk]' />
+              <text column='[federated.a0685c38b72f430db334].[usr:Calculation_KPILast12MCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
         <cols></cols>
       </table>
+          <simple-id uuid='{796EBD20-4FCF-4A45-A2A2-CD1CEA4AB851}' />
     </worksheet>
     <worksheet name='1_KPI_All'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -793,23 +797,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -829,22 +833,23 @@
             </view>
             <mark class='Text' />
             <encodings>
-              <text column='[federated.b24ae3f70f104fca9e97].[usr:Calculation_KPIAllCard:nk]' />
+              <text column='[federated.a0685c38b72f430db334].[usr:Calculation_KPIAllCard:nk]' />
             </encodings>
           </pane>
         </panes>
         <rows></rows>
         <cols></cols>
       </table>
+          <simple-id uuid='{BB3F81D5-6713-40C6-8B2C-526BF8E93ED5}' />
     </worksheet>
     <worksheet name='1_Trend'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
@@ -868,23 +873,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -894,7 +899,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]' value='false' />
           </style-rule>
         </style>
         <panes>
@@ -905,7 +910,7 @@
             <mark class='Automatic' />
             <encodings />
           </pane>
-          <pane id='1' selection-relaxation-option='selection-relaxation-allow' y-axis-name='[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]'>
+          <pane id='1' selection-relaxation-option='selection-relaxation-allow' y-axis-name='[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]'>
             <view>
               <breakdown value='auto' />
             </view>
@@ -917,7 +922,7 @@
               </style-rule>
             </style>
           </pane>
-          <pane id='2' selection-relaxation-option='selection-relaxation-allow' y-axis-name='[federated.b24ae3f70f104fca9e97].[count:claim_id:qk]'>
+          <pane id='2' selection-relaxation-option='selection-relaxation-allow' y-axis-name='[federated.a0685c38b72f430db334].[count:claim_id:qk]'>
             <view>
               <breakdown value='auto' />
             </view>
@@ -930,18 +935,19 @@
             </style>
           </pane>
         </panes>
-        <rows>([federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk] + [federated.b24ae3f70f104fca9e97].[count:claim_id:qk])</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>([federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk] + [federated.a0685c38b72f430db334].[count:claim_id:qk])</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
+          <simple-id uuid='{9C731867-43A5-4204-894B-5DF5FB7B6C19}' />
     </worksheet>
     <worksheet name='1_Map'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Latitude (generated)' datatype='real' name='[Latitude (generated)]' role='measure' type='quantitative' />
             <column caption='Longitude (generated)' datatype='real' name='[Longitude (generated)]' role='measure' type='quantitative' />
             <column caption='Claim Country' datatype='string' name='[claim_country]' role='dimension' type='nominal' />
@@ -967,23 +973,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1003,23 +1009,24 @@
             </view>
             <mark class='Circle' />
             <encodings>
-              <size column='[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]' />
-              <level column='[federated.b24ae3f70f104fca9e97].[none:claim_country:nk]' />
+              <size column='[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]' />
+              <level column='[federated.a0685c38b72f430db334].[none:claim_country:nk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:Latitude (generated):qk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:Longitude (generated):qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:Latitude (generated):qk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:Longitude (generated):qk]</cols>
       </table>
+          <simple-id uuid='{0564B7EF-3F99-4034-8058-0DFD89473FA8}' />
     </worksheet>
     <worksheet name='1_Top5_Customer'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
@@ -1039,23 +1046,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1065,7 +1072,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:customer:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1081,18 +1088,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:customer:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</cols>
       </table>
+          <simple-id uuid='{2AC7C05B-A40A-446C-8CD9-7CE43A08A2B5}' />
     </worksheet>
     <worksheet name='1_Top5_Defect'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -1114,23 +1122,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1140,7 +1148,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:defect_type_en:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:defect_type_en:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1156,18 +1164,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:defect_type_en:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:defect_type_en:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</cols>
       </table>
+          <simple-id uuid='{D6541D05-5620-4562-95C8-C852A1D95FEE}' />
     </worksheet>
     <worksheet name='1_Top5_Plant'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -1187,23 +1196,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1213,7 +1222,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:production_plant:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1229,18 +1238,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:production_plant:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</cols>
       </table>
+          <simple-id uuid='{5B9725E3-3C39-40C0-9F87-33EDFC7262F5}' />
     </worksheet>
     <worksheet name='2_SM_1'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -1262,22 +1272,22 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Lamp Systems&quot;' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1287,7 +1297,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1302,18 +1312,19 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
+          <simple-id uuid='{CD88C3F5-5DCA-42FA-A9DC-8377D9596F63}' />
     </worksheet>
     <worksheet name='2_SM_2'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -1335,22 +1346,22 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Mirror Systems&quot;' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1360,7 +1371,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1375,18 +1386,19 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
+          <simple-id uuid='{A416A63D-02AC-4E25-B6EC-9DCF7E12B57E}' />
     </worksheet>
     <worksheet name='2_SM_3'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -1408,22 +1420,22 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Chassis Systems&quot;' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1433,7 +1445,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1448,18 +1460,19 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
+          <simple-id uuid='{BEA272D5-A22D-46EA-BC71-A96004894455}' />
     </worksheet>
     <worksheet name='2_SM_4'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -1481,22 +1494,22 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Front End Module&quot;' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1506,7 +1519,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1521,18 +1534,19 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
+          <simple-id uuid='{FA9E4078-2013-4616-AB51-917D45E0568E}' />
     </worksheet>
     <worksheet name='2_SM_5'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Occurrence Month' datatype='date' name='[Calculation_OccurrenceMonth]' role='dimension' type='ordinal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
@@ -1554,22 +1568,22 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='member' level='[none:part_category:nk]' member='&quot;Electrification&quot;' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1579,7 +1593,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1594,18 +1608,19 @@
             <encodings />
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:Calculation_OccurrenceMonth:nk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:Calculation_OccurrenceMonth:nk]</cols>
       </table>
+          <simple-id uuid='{7F1C7E15-6819-47AE-95E8-638BBD374B96}' />
     </worksheet>
     <worksheet name='2_Heatmap'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
@@ -1627,23 +1642,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1653,8 +1668,8 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' value='false' />
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:defect_type_en:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:production_plant:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:defect_type_en:nk]' value='false' />
           </style-rule>
         </style>
         <panes>
@@ -1664,22 +1679,23 @@
             </view>
             <mark class='Square' />
             <encodings>
-              <color column='[federated.b24ae3f70f104fca9e97].[count:claim_id:qk]' />
+              <color column='[federated.a0685c38b72f430db334].[count:claim_id:qk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[none:defect_type_en:nk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:production_plant:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[none:defect_type_en:nk]</cols>
       </table>
+          <simple-id uuid='{4B971B07-65F5-4D98-8C57-07A0319BE4B7}' />
     </worksheet>
     <worksheet name='2_Rank_Category'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Part Category' datatype='string' name='[part_category]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -1699,23 +1715,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1725,7 +1741,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:part_category:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1741,18 +1757,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:part_category:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</cols>
       </table>
+          <simple-id uuid='{78889B40-FC61-4D9B-9AE9-A1626DEDDB4E}' />
     </worksheet>
     <worksheet name='2_Rank_DefectCount'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Defect Type En' datatype='string' name='[defect_type_en]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -1774,23 +1791,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1800,7 +1817,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:defect_type_en:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:defect_type_en:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1816,18 +1833,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:defect_type_en:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[count:claim_id:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:defect_type_en:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[count:claim_id:qk]</cols>
       </table>
+          <simple-id uuid='{EDC1A592-3F26-47A4-853A-94086A5063D4}' />
     </worksheet>
     <worksheet name='2_CustComposition'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
@@ -1847,23 +1865,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1873,7 +1891,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:customer:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -1889,18 +1907,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:customer:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</cols>
       </table>
+          <simple-id uuid='{E8454436-00BA-4E22-9257-DFFE07A99189}' />
     </worksheet>
     <worksheet name='3_Status'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Claim Id' datatype='string' name='[claim_id]' role='dimension' type='nominal' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -1922,23 +1941,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -1948,7 +1967,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:claim_status:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:claim_status:nk]' value='false' />
           </style-rule>
         </style>
         <panes>
@@ -1958,22 +1977,23 @@
             </view>
             <mark class='Bar' />
             <encodings>
-              <color column='[federated.b24ae3f70f104fca9e97].[none:claim_status:nk]' />
+              <color column='[federated.a0685c38b72f430db334].[none:claim_status:nk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:claim_status:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[count:claim_id:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:claim_status:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[count:claim_id:qk]</cols>
       </table>
+          <simple-id uuid='{18CDD521-1668-473E-AB76-B654E6175DE9}' />
     </worksheet>
     <worksheet name='3_Cycle_Customer'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
             <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
@@ -1993,23 +2013,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -2019,7 +2039,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:customer:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -2035,18 +2055,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[avg:Calculation_TotalCycleTime:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:customer:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[avg:Calculation_TotalCycleTime:qk]</cols>
       </table>
+          <simple-id uuid='{C830820E-BBD3-4E61-904E-2D9CB5458EE4}' />
     </worksheet>
     <worksheet name='3_Cycle_Plant'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Production Plant' datatype='string' name='[production_plant]' role='dimension' type='nominal' />
             <column caption='Total Cycle Time' datatype='integer' name='[Calculation_TotalCycleTime]' role='measure' type='quantitative' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -2066,23 +2087,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -2092,7 +2113,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:production_plant:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -2108,18 +2129,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[avg:Calculation_TotalCycleTime:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:production_plant:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[avg:Calculation_TotalCycleTime:qk]</cols>
       </table>
+          <simple-id uuid='{CCF4EBF0-5E6B-4CD3-839D-E63BB985BEDD}' />
     </worksheet>
     <worksheet name='3_Severity'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Severity' datatype='string' name='[severity]' role='dimension' type='nominal' />
             <column caption='Claim Amount Usd' datatype='real' name='[claim_amount_usd]' role='measure' type='quantitative' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -2141,23 +2163,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -2167,7 +2189,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:severity:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:severity:nk]' value='false' />
           </style-rule>
         </style>
         <panes>
@@ -2177,22 +2199,23 @@
             </view>
             <mark class='Bar' />
             <encodings>
-              <color column='[federated.b24ae3f70f104fca9e97].[none:severity:nk]' />
+              <color column='[federated.a0685c38b72f430db334].[none:severity:nk]' />
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:severity:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[sum:claim_amount_usd:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:severity:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[sum:claim_amount_usd:qk]</cols>
       </table>
+          <simple-id uuid='{D89351BC-4C6F-46D0-8846-7027039A1A1A}' />
     </worksheet>
     <worksheet name='3_LeadTime_Receive'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Lead Time To Receive' datatype='integer' name='[Calculation_LeadTimeToReceive]' role='measure' type='quantitative' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -2214,23 +2237,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -2240,7 +2263,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:claim_status:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:claim_status:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#1f4e79' />
@@ -2256,18 +2279,19 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:claim_status:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[avg:Calculation_LeadTimeToReceive:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:claim_status:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[avg:Calculation_LeadTimeToReceive:qk]</cols>
       </table>
+          <simple-id uuid='{2B4EA552-5517-4736-939F-552357174D6C}' />
     </worksheet>
     <worksheet name='3_LeadTime_Confirm'>
       <table>
         <view>
           <datasources>
-            <datasource caption='sl_corporation_quality_claims' name='federated.b24ae3f70f104fca9e97' />
+            <datasource caption='sl_corporation_quality_claims' name='federated.a0685c38b72f430db334' />
             <datasource name='Parameters' />
           </datasources>
-          <datasource-dependencies datasource='federated.b24ae3f70f104fca9e97'>
+          <datasource-dependencies datasource='federated.a0685c38b72f430db334'>
             <column caption='Claim Status' datatype='string' name='[claim_status]' role='dimension' type='nominal' />
             <column caption='Lead Time To Confirm' datatype='integer' name='[Calculation_LeadTimeToConfirm]' role='measure' type='quantitative' />
             <column caption='Customer' datatype='string' name='[customer]' role='dimension' type='nominal' />
@@ -2289,23 +2313,23 @@
               <calculation class='tableau' formula='#2025-12-31#' />
             </column>
           </datasource-dependencies>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:customer:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:customer:nk]'>
             <groupfilter function='level-members' level='[none:customer:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:production_plant:nk]'>
             <groupfilter function='level-members' level='[none:production_plant:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:part_category:nk]'>
             <groupfilter function='level-members' level='[none:part_category:nk]' user:ui-enumeration='all' user:ui-marker='enumerate' />
           </filter>
-          <filter class='categorical' column='[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]'>
+          <filter class='categorical' column='[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]'>
             <groupfilter function='member' level='[none:Calculation_DateRangeFilter:nk]' member='true' />
           </filter>
           <slices>
-            <column>[federated.b24ae3f70f104fca9e97].[none:customer:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:part_category:nk]</column>
-            <column>[federated.b24ae3f70f104fca9e97].[none:Calculation_DateRangeFilter:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:customer:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:production_plant:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:part_category:nk]</column>
+            <column>[federated.a0685c38b72f430db334].[none:Calculation_DateRangeFilter:nk]</column>
           </slices>
           <aggregation value='true' />
         </view>
@@ -2315,7 +2339,7 @@
             <format attr='display' scope='cols' value='false' />
           </style-rule>
           <style-rule element='label'>
-            <format attr='display' field='[federated.b24ae3f70f104fca9e97].[none:claim_status:nk]' value='false' />
+            <format attr='display' field='[federated.a0685c38b72f430db334].[none:claim_status:nk]' value='false' />
           </style-rule>
           <style-rule element='mark'>
             <format attr='mark-color' value='#2a7f62' />
@@ -2331,9 +2355,10 @@
             </encodings>
           </pane>
         </panes>
-        <rows>[federated.b24ae3f70f104fca9e97].[none:claim_status:nk]</rows>
-        <cols>[federated.b24ae3f70f104fca9e97].[avg:Calculation_LeadTimeToConfirm:qk]</cols>
+        <rows>[federated.a0685c38b72f430db334].[none:claim_status:nk]</rows>
+        <cols>[federated.a0685c38b72f430db334].[avg:Calculation_LeadTimeToConfirm:qk]</cols>
       </table>
+          <simple-id uuid='{FCD87220-44A2-4F82-BE59-1A585FCBCF65}' />
     </worksheet>
   </worksheets>
   <dashboards>
@@ -2362,7 +2387,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='15' type-v2='dashboard-object' w='13750' x='0' y='10000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{269A1EAA-0930-4B0B-8A92-56372D34BDB2}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{068EFBE1-F91D-470E-99B5-9915E0799981}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>1. 종합 요약</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2377,7 +2402,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='16' type-v2='dashboard-object' w='13750' x='0' y='13000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{29AC7495-14F3-4A0F-AA5B-6A199A360553}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{ECC7AC36-79A2-4AFE-BA04-E407EE95EED4}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>2. 원인 드릴다운</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2392,7 +2417,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='17' type-v2='dashboard-object' w='13750' x='0' y='16000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{522DA93A-E79F-4D5F-B81D-9186089B32EA}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{224E808C-5949-46D9-AA1B-D7072129BEAB}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>3. 리드타임 효율</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2449,7 +2474,7 @@
             </zone-style>
         </zone>
         <zone fixed-size='171' is-fixed='true' h='7142' id='23' param='horz' type-v2='layout-flow' w='86250' x='13750' y='7142'>
-          <zone fixed-size='201' is-fixed='true' h='7142' id='24' mode='checkdropdown' name='1_KPI_1M' param='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='7142'>
+          <zone fixed-size='201' is-fixed='true' h='7142' id='24' mode='checkdropdown' name='1_KPI_1M' param='[federated.a0685c38b72f430db334].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='7142'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -2457,7 +2482,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone fixed-size='201' is-fixed='true' h='7142' id='25' mode='checkdropdown' name='1_KPI_1M' param='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='7142'>
+          <zone fixed-size='201' is-fixed='true' h='7142' id='25' mode='checkdropdown' name='1_KPI_1M' param='[federated.a0685c38b72f430db334].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='7142'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -2465,7 +2490,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone fixed-size='201' is-fixed='true' h='7142' id='26' mode='checkdropdown' name='1_KPI_1M' param='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='7142'>
+          <zone fixed-size='201' is-fixed='true' h='7142' id='26' mode='checkdropdown' name='1_KPI_1M' param='[federated.a0685c38b72f430db334].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='7142'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -2741,7 +2766,7 @@
           <zone h='2000' id='57' type-v2='empty' w='13750' x='0' y='8000'>
           </zone>
           <zone h='3000' id='58' type-v2='dashboard-object' w='13750' x='0' y='10000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{269A1EAA-0930-4B0B-8A92-56372D34BDB2}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{068EFBE1-F91D-470E-99B5-9915E0799981}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>1. 종합 요약</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2756,7 +2781,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='59' type-v2='dashboard-object' w='13750' x='0' y='13000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{29AC7495-14F3-4A0F-AA5B-6A199A360553}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{ECC7AC36-79A2-4AFE-BA04-E407EE95EED4}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>2. 원인 드릴다운</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2771,7 +2796,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='60' type-v2='dashboard-object' w='13750' x='0' y='16000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{522DA93A-E79F-4D5F-B81D-9186089B32EA}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{224E808C-5949-46D9-AA1B-D7072129BEAB}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>3. 리드타임 효율</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2798,7 +2823,7 @@
           </zone>
         </zone>
         <zone h='7142' id='66' param='horz' type-v2='layout-flow' w='86250' x='13750' y='7142'>
-          <zone h='7142' id='67' mode='checkdropdown' name='1_KPI_1M' param='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='7142'>
+          <zone h='7142' id='67' mode='checkdropdown' name='1_KPI_1M' param='[federated.a0685c38b72f430db334].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='7142'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -2806,7 +2831,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='7142' id='68' mode='checkdropdown' name='1_KPI_1M' param='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='7142'>
+          <zone h='7142' id='68' mode='checkdropdown' name='1_KPI_1M' param='[federated.a0685c38b72f430db334].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='7142'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -2814,7 +2839,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='7142' id='69' mode='checkdropdown' name='1_KPI_1M' param='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='7142'>
+          <zone h='7142' id='69' mode='checkdropdown' name='1_KPI_1M' param='[federated.a0685c38b72f430db334].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='7142'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -2906,6 +2931,7 @@
           </zones>
         </devicelayout>
       </devicelayouts>
+      <simple-id uuid='{CD5B68DF-A93E-4D02-8BB3-5EEE66237F84}' />
     </dashboard>
     <dashboard name='2. 원인 드릴다운'>
       <style />
@@ -2932,7 +2958,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='91' type-v2='dashboard-object' w='13750' x='0' y='10000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{269A1EAA-0930-4B0B-8A92-56372D34BDB2}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{068EFBE1-F91D-470E-99B5-9915E0799981}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>1. 종합 요약</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2947,7 +2973,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='92' type-v2='dashboard-object' w='13750' x='0' y='13000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{29AC7495-14F3-4A0F-AA5B-6A199A360553}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{ECC7AC36-79A2-4AFE-BA04-E407EE95EED4}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>2. 원인 드릴다운</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -2962,7 +2988,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='93' type-v2='dashboard-object' w='13750' x='0' y='16000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{522DA93A-E79F-4D5F-B81D-9186089B32EA}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{224E808C-5949-46D9-AA1B-D7072129BEAB}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>3. 리드타임 효율</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3019,7 +3045,7 @@
             </zone-style>
         </zone>
         <zone fixed-size='160' is-fixed='true' h='6666' id='99' param='horz' type-v2='layout-flow' w='86250' x='13750' y='6666'>
-          <zone fixed-size='201' is-fixed='true' h='6666' id='100' mode='checkdropdown' name='2_SM_1' param='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6666'>
+          <zone fixed-size='201' is-fixed='true' h='6666' id='100' mode='checkdropdown' name='2_SM_1' param='[federated.a0685c38b72f430db334].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3027,7 +3053,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone fixed-size='201' is-fixed='true' h='6666' id='101' mode='checkdropdown' name='2_SM_1' param='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6666'>
+          <zone fixed-size='201' is-fixed='true' h='6666' id='101' mode='checkdropdown' name='2_SM_1' param='[federated.a0685c38b72f430db334].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3035,7 +3061,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone fixed-size='201' is-fixed='true' h='6666' id='102' mode='checkdropdown' name='2_SM_1' param='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6666'>
+          <zone fixed-size='201' is-fixed='true' h='6666' id='102' mode='checkdropdown' name='2_SM_1' param='[federated.a0685c38b72f430db334].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3366,7 +3392,7 @@
           <zone h='2000' id='140' type-v2='empty' w='13750' x='0' y='8000'>
           </zone>
           <zone h='3000' id='141' type-v2='dashboard-object' w='13750' x='0' y='10000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{269A1EAA-0930-4B0B-8A92-56372D34BDB2}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{068EFBE1-F91D-470E-99B5-9915E0799981}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>1. 종합 요약</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3381,7 +3407,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='142' type-v2='dashboard-object' w='13750' x='0' y='13000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{29AC7495-14F3-4A0F-AA5B-6A199A360553}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{ECC7AC36-79A2-4AFE-BA04-E407EE95EED4}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>2. 원인 드릴다운</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3396,7 +3422,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='143' type-v2='dashboard-object' w='13750' x='0' y='16000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{522DA93A-E79F-4D5F-B81D-9186089B32EA}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{224E808C-5949-46D9-AA1B-D7072129BEAB}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>3. 리드타임 효율</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3423,7 +3449,7 @@
           </zone>
         </zone>
         <zone h='6666' id='149' param='horz' type-v2='layout-flow' w='86250' x='13750' y='6666'>
-          <zone h='6666' id='150' mode='checkdropdown' name='2_SM_1' param='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6666'>
+          <zone h='6666' id='150' mode='checkdropdown' name='2_SM_1' param='[federated.a0685c38b72f430db334].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3431,7 +3457,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='6666' id='151' mode='checkdropdown' name='2_SM_1' param='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6666'>
+          <zone h='6666' id='151' mode='checkdropdown' name='2_SM_1' param='[federated.a0685c38b72f430db334].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3439,7 +3465,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='6666' id='152' mode='checkdropdown' name='2_SM_1' param='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6666'>
+          <zone h='6666' id='152' mode='checkdropdown' name='2_SM_1' param='[federated.a0685c38b72f430db334].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6666'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3549,6 +3575,7 @@
           </zones>
         </devicelayout>
       </devicelayouts>
+      <simple-id uuid='{AE08ABE4-F856-4811-92C6-310F9B2E085F}' />
     </dashboard>
     <dashboard name='3. 리드타임 효율'>
       <style />
@@ -3575,7 +3602,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='182' type-v2='dashboard-object' w='13750' x='0' y='10000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{269A1EAA-0930-4B0B-8A92-56372D34BDB2}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{068EFBE1-F91D-470E-99B5-9915E0799981}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>1. 종합 요약</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3590,7 +3617,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='183' type-v2='dashboard-object' w='13750' x='0' y='13000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{29AC7495-14F3-4A0F-AA5B-6A199A360553}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{ECC7AC36-79A2-4AFE-BA04-E407EE95EED4}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>2. 원인 드릴다운</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3605,7 +3632,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='184' type-v2='dashboard-object' w='13750' x='0' y='16000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{522DA93A-E79F-4D5F-B81D-9186089B32EA}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{224E808C-5949-46D9-AA1B-D7072129BEAB}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>3. 리드타임 효율</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3662,7 +3689,7 @@
             </zone-style>
         </zone>
         <zone fixed-size='155' is-fixed='true' h='6451' id='190' param='horz' type-v2='layout-flow' w='86250' x='13750' y='6451'>
-          <zone fixed-size='201' is-fixed='true' h='6451' id='191' mode='checkdropdown' name='3_Status' param='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6451'>
+          <zone fixed-size='201' is-fixed='true' h='6451' id='191' mode='checkdropdown' name='3_Status' param='[federated.a0685c38b72f430db334].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6451'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3670,7 +3697,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone fixed-size='201' is-fixed='true' h='6451' id='192' mode='checkdropdown' name='3_Status' param='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6451'>
+          <zone fixed-size='201' is-fixed='true' h='6451' id='192' mode='checkdropdown' name='3_Status' param='[federated.a0685c38b72f430db334].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6451'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3678,7 +3705,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone fixed-size='201' is-fixed='true' h='6451' id='193' mode='checkdropdown' name='3_Status' param='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6451'>
+          <zone fixed-size='201' is-fixed='true' h='6451' id='193' mode='checkdropdown' name='3_Status' param='[federated.a0685c38b72f430db334].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6451'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3934,7 +3961,7 @@
           <zone h='2000' id='222' type-v2='empty' w='13750' x='0' y='8000'>
           </zone>
           <zone h='3000' id='223' type-v2='dashboard-object' w='13750' x='0' y='10000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{269A1EAA-0930-4B0B-8A92-56372D34BDB2}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{068EFBE1-F91D-470E-99B5-9915E0799981}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>1. 종합 요약</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3949,7 +3976,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='224' type-v2='dashboard-object' w='13750' x='0' y='13000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{29AC7495-14F3-4A0F-AA5B-6A199A360553}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{ECC7AC36-79A2-4AFE-BA04-E407EE95EED4}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>2. 원인 드릴다운</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3964,7 +3991,7 @@
             </zone-style>
           </zone>
           <zone h='3000' id='225' type-v2='dashboard-object' w='13750' x='0' y='16000'>
-            <button action='tabdoc:goto-sheet window-id=&quot;{522DA93A-E79F-4D5F-B81D-9186089B32EA}&quot;' button-type='text'>
+            <button action='tabdoc:goto-sheet window-id=&quot;{224E808C-5949-46D9-AA1B-D7072129BEAB}&quot;' button-type='text'>
               <button-visual-state>
                 <caption>3. 리드타임 효율</caption>
                 <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
@@ -3991,7 +4018,7 @@
           </zone>
         </zone>
         <zone h='6451' id='231' param='horz' type-v2='layout-flow' w='86250' x='13750' y='6451'>
-          <zone h='6451' id='232' mode='checkdropdown' name='3_Status' param='[federated.b24ae3f70f104fca9e97].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6451'>
+          <zone h='6451' id='232' mode='checkdropdown' name='3_Status' param='[federated.a0685c38b72f430db334].[none:customer:nk]' show-apply='true' type-v2='filter' w='14375' x='13750' y='6451'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -3999,7 +4026,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='6451' id='233' mode='checkdropdown' name='3_Status' param='[federated.b24ae3f70f104fca9e97].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6451'>
+          <zone h='6451' id='233' mode='checkdropdown' name='3_Status' param='[federated.a0685c38b72f430db334].[none:production_plant:nk]' show-apply='true' type-v2='filter' w='14375' x='28125' y='6451'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -4007,7 +4034,7 @@
               <format attr='margin' value='4' />
             </zone-style>
           </zone>
-          <zone h='6451' id='234' mode='checkdropdown' name='3_Status' param='[federated.b24ae3f70f104fca9e97].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6451'>
+          <zone h='6451' id='234' mode='checkdropdown' name='3_Status' param='[federated.a0685c38b72f430db334].[none:part_category:nk]' show-apply='true' type-v2='filter' w='14375' x='42500' y='6451'>
             <zone-style>
               <format attr='border-color' value='#000000' />
               <format attr='border-style' value='none' />
@@ -4096,6 +4123,7 @@
           </zones>
         </devicelayout>
       </devicelayouts>
+      <simple-id uuid='{9D75C316-28D2-45AF-9E59-ACF4A8CB207E}' />
     </dashboard>
   </dashboards>
   <windows>
@@ -4658,7 +4686,7 @@
         </viewpoint>
       </viewpoints>
       <active id='31' />
-      <simple-id uuid='{269A1EAA-0930-4B0B-8A92-56372D34BDB2}' />
+      <simple-id uuid='{068EFBE1-F91D-470E-99B5-9915E0799981}' />
     </window>
     <window class='dashboard' name='2. 원인 드릴다운'>
       <viewpoints>
@@ -4691,7 +4719,7 @@
         </viewpoint>
       </viewpoints>
       <active id='109' />
-      <simple-id uuid='{29AC7495-14F3-4A0F-AA5B-6A199A360553}' />
+      <simple-id uuid='{ECC7AC36-79A2-4AFE-BA04-E407EE95EED4}' />
     </window>
     <window class='dashboard' name='3. 리드타임 효율'>
       <viewpoints>
@@ -4715,7 +4743,7 @@
         </viewpoint>
       </viewpoints>
       <active id='200' />
-      <simple-id uuid='{522DA93A-E79F-4D5F-B81D-9186089B32EA}' />
+      <simple-id uuid='{224E808C-5949-46D9-AA1B-D7072129BEAB}' />
     </window>
   </windows>
 </workbook>
