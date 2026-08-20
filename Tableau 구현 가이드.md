@@ -691,13 +691,17 @@ CSV/텍스트 파일 연결은 Tableau 내부에서 `federated` 데이터소스�
 
 ### 15-2. ❌ 2025.3 로드 테스트 완료 — 실물 파일에 있지만 우리 버전에서 거부된 것
 
-- **대시보드 탐색 버튼**: `<zone type-v2='dashboard-object'><button action="tabdoc:goto-sheet window-id=...">`. **네 번 시도**(직접 → is-fixed/fixed-size/zone-style까지 완전 재현 →
-  `<zone>`으로 한 겹 더 중첩) 전부 정확히 동일한 오류로 거부됨:
-  `element 'button' is not allowed for content model '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'` — 중첩해도 안쪽 zone에 똑같은 content model이 적용되는 것까지 확인(2025-08-20).
-  **최종 결론: 이 참고 파일들을 저장한 버전(2024.2.1/v10.5/2021.3)과 2025.3 사이에 대시보드
-  탐색 버튼의 저장 포맷 자체가 바뀐 것 — 2025.3 실물 참고 예시 없이는 더 이상 재시도하지
-  않기로 함.** 실제 클릭 이동이 필요하면 Tableau UI에서 "탐색" 개체를 직접 드래그(수 초짜리
-  네이티브 기능, 우리가 겪은 문제와 무관하게 동작).
+- **대시보드 탐색 버튼**: `<zone type-v2='dashboard-object'><button action="tabdoc:goto-sheet window-id=...">`. **다섯 번 시도, 전부 실패.** 처음 네 번은 손수 작성(직접 →
+  is-fixed/fixed-size/zone-style까지 완전 재현 → `<zone>` 중첩), 다섯 번째는 **사용자가
+  Tableau 2025.3 UI에서 직접 "탐색" 개체를 만들어 저장한 실물 결과물**(2025-08-20) — 그런데
+  이것마저 Tableau를 완전히 종료했다가 다시 여니 정확히 같은 오류로 거부됨:
+  `element 'button' is not allowed for content model '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'`.
+  **최종 결론(확정): 이건 우리가 XML을 잘못 짜서가 아니라, Tableau 2025.3 이 빌드 자체가
+  대시보드 탐색 버튼을 "저장은 하지만 자기가 새로 열 땐 거부하는" 상태 — 즉 이 특정 기능에
+  한해 저장 포맷과 로드 포맷이 어긋나 있는 것으로 보임(제품 버그로 의심됨). 앞으로 이
+  기능은 어떤 형태로도 다시 시도하지 않음.** 클릭형 이동이 필요하면 대시보드 하단 시트
+  탭(항상 켜져 있어 이미 사용 가능)을 쓰는 게 유일하게 확실한 대안 — Tableau UI의 "탐색"
+  개체 자체가 이 환경에서는 재로드를 못 버틴다는 게 실물로 확인됐으므로 그마저도 권장하지 않음.
 - **`<window class='dashboard'>`의 `<simple-id>`**: 위 버튼과 같은 이유로 함께 거부됨
   (`'(viewpoints,active,device-preview)'`에 simple-id 자리가 없음). 탐색 버튼 없이는 필요도 없음.
 - **zone-style의 `corner-radius`**: `StyleAttribute-ST`에는 있는 값이지만 zone-style 레벨에서는

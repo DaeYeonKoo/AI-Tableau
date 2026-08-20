@@ -950,12 +950,6 @@ PAGE_CONTENT = {
 
 DASH_NAMES = list(PAGE_CONTENT.keys())
 
-# 탐색 버튼의 action="tabdoc:goto-sheet window-id=..."이 가리킬 대상 - 대시보드 window의
-# <simple-id>. 사용자가 Tableau UI에서 직접 만들어 저장한 실물 2025.3 결과물에서, 버튼이
-# 하나도 없는 대시보드(1. 종합 요약 자기 자신)를 포함해 대시보드 창 3개 전부에 simple-id가
-# 붙어 있는 것으로 확인 - 그래서 아래 window 조립부에서도 대시보드 3개 전부에 무조건 부여.
-DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name in DASH_NAMES}
-
 
 def gnb_column(current_dash):
     """좌측 메뉴바(GNB) - 기획안 사이드바처럼 위에 워드마크, 그 아래 대시보드별 이동 항목을
@@ -1145,44 +1139,28 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "navbutton":
-        # 사용자가 Tableau UI에서 "종합 요약" 대시보드에 직접 탐색 버튼을 추가해서 저장한 실물
-        # 2025.3 결과물(대시보드/SL_Corporation_Quality_Claims.twb, 2025-08-20)에서 그대로
-        # 확인한 구조 - 이전 4번의 손수 작성 시도와 달리 is-fixed/fixed-size/zone-style이
-        # 전혀 없는 훨씬 단순한 형태였음:
-        #   <zone type-v2='dashboard-object' ...>
-        #     <button action="tabdoc:goto-sheet window-id=&quot;{GUID}&quot;" button-type='text'>
-        #       <button-visual-state>
-        #         <caption>대상 대시보드 이름</caption>
-        #         <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
-        #         <format attr='background-color' value='#333333' />
-        #       </button-visual-state>
-        #     </button>
-        #   </zone>
-        # window-id는 대상 <window class='dashboard'>의 <simple-id>와 일치(이 실물 파일은
-        # 대시보드 3개 창 전부에 simple-id가 붙어 있었음 - DASHBOARD_WINDOW_GUIDS로 재현).
-        # 현재 페이지 자기 자신은 클릭할 필요가 없으니 기존처럼 강조 스타일의 일반 텍스트로 유지.
+        # <button> 기반 탐색 버튼: 다섯 번째이자 마지막 시도까지 실패 확정(2025-08-20). 이번엔
+        # 손으로 만든 게 아니라 사용자가 Tableau UI에서 직접 "탐색" 개체를 만들어 저장한 실물
+        # 결과물 그대로였는데도, Tableau를 완전히 종료했다가 다시 여니 정확히 같은 오류
+        # ("element 'button' is not allowed for content model ...")로 거부됨. 즉 이 문제는
+        # 우리가 XML을 잘못 짜서가 아니라 - Tableau 2025.3 자체가 "저장은 되지만 자기가 새로
+        # 열 땐 거부하는" 상태(저장 포맷과 로드 포맷이 이 버전에서 서로 어긋남)라는 뜻. 이 접근은
+        # 완전히 접음 - 더 이상 어떤 변형도 시도하지 않음. 클릭형 이동이 필요하면 대시보드
+        # 하단의 시트 탭(이미 항상 켜져 있음)을 쓰거나, 좌측 메뉴바는 아래처럼 클릭 안 되는
+        # 강조 텍스트로만 "현재 위치"를 보여주는 용도로 유지.
         target_dash, is_active = node[1], node[2]
         zid = id_gen()
-        if is_active:
-            return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
-                    f"            <formatted-text><run bold='true' fontcolor='#ffffff' fontsize='12'>{target_dash}</run></formatted-text>\n"
-                    f"            <zone-style>\n"
-                    f"              <format attr='border-color' value='#000000' />\n"
-                    f"              <format attr='border-style' value='none' />\n"
-                    f"              <format attr='border-width' value='0' />\n"
-                    f"              <format attr='margin' value='0' />\n"
-                    f"              <format attr='background-color' value='{TITLE_COLOR}' />\n"
-                    f"            </zone-style>\n"
-                    f"          </zone>")
-        guid = DASHBOARD_WINDOW_GUIDS[target_dash]
-        return (f"          <zone h='{h}' id='{zid}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
-                f"            <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
-                f"              <button-visual-state>\n"
-                f"                <caption>{target_dash}</caption>\n"
-                f"                <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />\n"
-                f"                <format attr='background-color' value='#333333' />\n"
-                f"              </button-visual-state>\n"
-                f"            </button>\n"
+        fontcolor = "#ffffff" if is_active else "#333333"
+        bg = TITLE_COLOR if is_active else "#f5f5f5"
+        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <formatted-text><run bold='true' fontcolor='{fontcolor}' fontsize='12'>{target_dash}</run></formatted-text>\n"
+                f"            <zone-style>\n"
+                f"              <format attr='border-color' value='#000000' />\n"
+                f"              <format attr='border-style' value='none' />\n"
+                f"              <format attr='border-width' value='0' />\n"
+                f"              <format attr='margin' value='0' />\n"
+                f"              <format attr='background-color' value='{bg}' />\n"
+                f"            </zone-style>\n"
                 f"          </zone>")
 
     children = [(_c[2], _c[1]) if _c[0] == "w" else (_c, 1) for _c in node[1]]  # (node, weight)
@@ -1302,14 +1280,15 @@ for dn, sheets in PAGE_SHEETS.items():
         for sn in sheets
     )
     active_id = zone_ids[sheets[0]]
-    # <window class='dashboard'>의 <simple-id> - 사용자가 Tableau UI에서 직접 만든 실물
-    # 2025.3 결과물에서 대시보드 창 3개 전부(버튼이 없는 것 포함)에 붙어 있는 것으로 확인,
-    # 탐색 버튼의 window-id가 가리키는 대상이 이 값.
+    # <window class='dashboard'>의 <simple-id>는 탐색 버튼 자체가 확정 폐기되면서 (아래
+    # navbutton 분기 주석 참고) 참조할 데가 없어짐 - 다시 뺌. 이 조합(button + window
+    # simple-id)은 손수 작성 4회 + 사용자가 Tableau UI로 직접 만든 실물 1회, 총 5번 전부
+    # 완전 종료 후 재로드에서 동일하게 거부됨 - Tableau 2025.3 자체의 저장/로드 포맷 불일치로
+    # 최종 결론.
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
         f"      <active id='{active_id}' />\n"
-        f"      <simple-id uuid='{DASHBOARD_WINDOW_GUIDS[dn]}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
