@@ -909,7 +909,7 @@ PAGE_CONTENT = {
         W(5, ("horz", [
             ("leaf", "1_KPI_1M", "card"), ("leaf", "1_KPI_3M", "card"), ("leaf", "1_KPI_6M", "card"),
             ("leaf", "1_KPI_12M", "card"), ("leaf", "1_KPI_All", "card-hl"),
-        ])),
+        ], {"fixed_size": 200})),
         W(7, captioned("월별 클레임 건수 · 금액 추이", ("leaf", "1_Trend"))),
         W(12, ("horz", [
             captioned("국가별 클레임 규모", ("leaf", "1_Map")),
@@ -1068,10 +1068,13 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
     reuse_ids가 주어지면(phone 레이아웃 생성 시) 워크시트 leaf zone의 id를 desktop과
     동일하게 재사용 - 실물 파일에서 확인된 패턴. 컨테이너 zone은 desktop/phone 각자 새 id.
     """
-    def fixed_attrs():
+    def fixed_attrs(override_px=None):
         if not with_style:
             return ""
-        px = round(h / 100000 * DASH_H) if flow_dir == "vert" else round(w / 100000 * DASH_W)
+        if override_px is not None:
+            px = override_px
+        else:
+            px = round(h / 100000 * DASH_H) if flow_dir == "vert" else round(w / 100000 * DASH_W)
         return f" fixed-size='{px}' is-fixed='true'"
 
     kind = node[0]
@@ -1181,7 +1184,10 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
             pos += ch_w
     inner_xml = "\n".join(parts)
     style = "\n" + ZONE_STYLE if with_style else ""
-    return f"""        <zone{fixed_attrs()} h='{h}' id='{cid}' param='{kind}' type-v2='layout-flow' w='{w}' x='{x}' y='{y}'>
+    # node에 3번째 요소로 {"fixed_size": N} 같은 override dict가 있으면, 비중 계산 대신
+    # 그 픽셀값을 그대로 fixed-size에 사용 (예: KPI 카드 행 높이를 정확히 200px로 고정).
+    opts = node[2] if len(node) > 2 and isinstance(node[2], dict) else {}
+    return f"""        <zone{fixed_attrs(opts.get("fixed_size"))} h='{h}' id='{cid}' param='{kind}' type-v2='layout-flow' w='{w}' x='{x}' y='{y}'>
 {inner_xml}{style}
         </zone>"""
 
@@ -1338,7 +1344,9 @@ WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
 </workbook>
 """
 
-OUT_PATH = "SL_Corporation_Quality_Claims.twb"
+OUT_DIR = "대시보드"
+os.makedirs(OUT_DIR, exist_ok=True)
+OUT_PATH = os.path.join(OUT_DIR, "SL_Corporation_Quality_Claims.twb")
 with open(OUT_PATH, "w", encoding="utf-8") as f:
     f.write(WORKBOOK)
 
