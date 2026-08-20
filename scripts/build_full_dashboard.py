@@ -320,6 +320,15 @@ def field_ref(name):
 # 따를 것으로 추정(미검증) - 우선 Month/Year만 실제로 사용.
 DATE_PART_DERIVATIONS = {"Year": "yr", "Quarter": "qr", "Month": "mn", "Week": "wk", "Day": "dy"}
 
+# "잘라내기(Trunc)" 날짜 파생 - 날짜 일부만 뽑는 DATE_PART_DERIVATIONS(이산/ordinal, 예: 매년
+# 반복되는 '1월')와 달리, 연속된 하나의 타임라인으로 잘라내는 파생(예: 2023-01-01, 2023-02-01,
+# ... 계속 증가) - 축이 연속형(continuous)이라 여러 해에 걸친 라인이 끊기지 않고 이어짐.
+# scratchpad/reference.twb, filter_reference.twb에서 'tmn:Order Date:qk'(Month-Trunc),
+# 'tdy:기준일자:qk'/'tdy:DATE:qk'(Day-Trunc) 둘 다 접두사 't'+날짜파생 접두사, suffix
+# 'qk'(quantitative/연속형)로 확인 - 나머지(Year/Quarter/Week-Trunc)는 같은 규칙으로 추정.
+TRUNC_DERIVATIONS = {"Year-Trunc": "tyr", "Quarter-Trunc": "tqr", "Month-Trunc": "tmn",
+                     "Week-Trunc": "twk", "Day-Trunc": "tdy"}
+
 
 def col_instance(name, derivation, alias=None):
     """rows/cols/encodings에서 쓸 column-instance 이름/타입/베이스컬럼 정보를 묶어서 반환.
@@ -338,6 +347,9 @@ def col_instance(name, derivation, alias=None):
         # quantitative로 바뀌지 않고 ordinal로 남음(실물 파일에서 derivation='Month'가
         # type='ordinal' suffix='ok'였던 것으로 확인 - 이중축 예시.twbx [mn:주문 날짜:ok]).
         out_ftype = "ordinal"
+    elif derivation in TRUNC_DERIVATIONS:
+        # Trunc 파생은 연속(continuous) 타임라인이라 quantitative - 실물 확인(tmn/tdy, suffix 'qk').
+        out_ftype = "quantitative"
     else:
         # 집계(Sum/Count/Avg 등)를 적용하면 원본 필드 타입과 무관하게 결과는 항상 quantitative
         out_ftype = "quantitative"
@@ -353,6 +365,8 @@ def col_instance(name, derivation, alias=None):
         derivation_label, prefix = "User", "usr"
     elif derivation in DATE_PART_DERIVATIONS:
         derivation_label, prefix = derivation, DATE_PART_DERIVATIONS[derivation]
+    elif derivation in TRUNC_DERIVATIONS:
+        derivation_label, prefix = derivation, TRUNC_DERIVATIONS[derivation]
     else:
         derivation_label, prefix = derivation, derivation.lower()
     inst_name = f"[{prefix}:{ref}:{suffix}]"
@@ -523,7 +537,13 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
     워크시트 단독 필터로 단순화해서 재사용(미검증 변형 - Set 래퍼 없이 직접 필터에 적용).
     2025-08-20 실물 오류(D2E8DA72)로 확인: 2026.2 참고 XSD의 <computed-sort> 전용 원소는
     설치된 2025.3에는 아직 없음 - 2025.3의 실제 content model은 여전히 'sort' 원소를
-    기대함('...,filter,sort,perspectives,...'). class='computed' 문법으로 되돌림."""
+    기대함('...,filter,sort,perspectives,...'). class='computed' 문법으로 되돌림.
+    2025-08-20 실물 확인(Top5 고객사/생산공장은 5개 초과 표시, Top5 불량유형만 정상): dim이
+    FILTER_DIMS(customer/production_plant/part_category)에도 속하면 common_filter_block()이
+    같은 컬럼에 '전체 선택' <filter>를 하나 더 추가해서 Top-N <filter>와 같은 column에
+    두 개의 <filter>가 중복 - Tableau가 둘 중 하나를 무시하는 것으로 보임(불량유형은
+    FILTER_DIMS에 없어서 이 충돌이 없었던 게 유일한 정상 케이스였음). top_n이 걸린 dim은
+    공통 필터 목록에서 제외해 중복을 없앰."""
     dci = col_instance(dim, "None")
     mci = col_instance(meas, meas_agg)
     cis = [dci, mci]
@@ -532,7 +552,7 @@ def ws_simple_bar(name, dim, meas, meas_agg="Sum", color_dim=None, mark="Bar", m
         cci = col_instance(color_dim, "None")
         cis.append(cci)
         color_xml = f"\n              <color column='{cci['qualified']}' />"
-    filt_cis, filters_xml, slices_xml = common_filter_block()
+    filt_cis, filters_xml, slices_xml = common_filter_block(exclude={dim} if top_n else None)
     cis.extend(filt_cis)
     deps = datasource_dependencies(cis, sheet_name=name)
     style_block = worksheet_style_block(mark_color=mark_color, hide_label_fields=[dci['qualified']])
@@ -667,19 +687,22 @@ def ws_dual_axis(name, dim, meas_bar, meas_bar_agg, meas_line, meas_line_agg, ba
     mark class)을 추가. 실물 예시는 색상을 Measure Names 인코딩으로 나눴지만, 우리는
     막대/라인이 애초에 서로 다른 pane이라 각 pane 자체의 style-rule에 고정 mark-color를
     거는 것만으로 충분(더 단순하고 검증된 mark-color 패턴 재사용)."""
-    # 상단에 연도, 하단에 월 머리글이 보이도록 2단 날짜 계층을 <cols>에 그대로 둠(다른
+    # 상단에 연도, 하단에 월 머리글이 보이면서도 라인이 연도 경계에서 끊기지 않아야 함(다른
     # 차트들과 달리 이 워크시트는 머리글을 숨기지 않음 - 사용자가 명시적으로 요청).
-    # 2025-08-20 실물 오류(1_Trend, "잘못된 형식의 식: 연산자를 피연산자와 연결할 수 없음")로
-    # 확인: 같은 shelf에 여러 필드를 공백으로 나열하는 건 잘못된 문법 - 참고 자료 3종을 뜯은
-    # scratchpad/reference.twb(16144번째 줄 등)에서 실제 연/월 2단 계층이
-    # '([ds].[yr:field:ok] / [ds].[mn:field:ok])' 형태(괄호로 묶고 '/'로 연결)인 것을 확인해
-    # 그 문법으로 교체.
-    year_ci = col_instance(dim, "Year")
-    month_ci = col_instance(dim, "Month")
+    # 2025-08-20 1차 실물 오류(1_Trend, "잘못된 형식의 식")로 discrete Year+Month 두 필드를
+    # 공백으로 나열하는 문법이 틀렸다는 게 확인돼 '(yr / mn)' 괄호+슬래시로 고쳤더니 로드는
+    # 됐지만, 그 다음 실물 확인(사용자 스크린샷)에서 라인이 매 연도 경계마다 끊기는 게
+    # 드러남 - discrete 필드 2개를 <cols>에 나열하면 Tableau가 연도별로 별도 서브테이블(사이
+    # 여백 있음)로 쪼개서 그리는 것으로 확인. 해결: discrete Year+Month 계층 대신 연속형
+    # (continuous) 'Month-Trunc' 파생 필드 하나만 사용 - 참고 자료에서 실제로 확인된
+    # '[tmn:필드:qk]'(quantitative, 연속) 패턴(TRUNC_DERIVATIONS 주석 참고). 연속형 날짜 축은
+    # 여러 해에 걸쳐도 하나의 이어진 타임라인이라 라인이 끊기지 않고, Tableau가 연속 날짜
+    # 축에서 연도가 바뀔 때 자동으로 상위 헤더 행(연도)을 추가로 보여주는 표준 동작을 활용.
+    month_ci = col_instance(dim, "Month-Trunc")
     bar_ci = col_instance(meas_bar, meas_bar_agg)
     line_ci = col_instance(meas_line, meas_line_agg)
     filt_cis, filters_xml, slices_xml = common_filter_block()
-    deps = datasource_dependencies([year_ci, month_ci, bar_ci, line_ci] + filt_cis, sheet_name=name)
+    deps = datasource_dependencies([month_ci, bar_ci, line_ci] + filt_cis, sheet_name=name)
     style_block = worksheet_style_block()
     return f"""    <worksheet name='{name}'>
       <table>
@@ -731,7 +754,7 @@ def ws_dual_axis(name, dim, meas_bar, meas_bar_agg, meas_line, meas_line_agg, ba
           </pane>
         </panes>
         <rows>({line_ci['qualified']} + {bar_ci['qualified']})</rows>
-        <cols>({year_ci['qualified']} / {month_ci['qualified']})</cols>
+        <cols>{month_ci['qualified']}</cols>
       </table>
     </worksheet>"""
 
@@ -826,14 +849,54 @@ def ws_kpi_text(name, card_field, mark_color=None):
 
 
 def ws_map(name):
-    """claim_country 기준 버블맵 - Tableau 자동 생성 위경도 필드 사용 (리스크 큰 시도)."""
+    """claim_country 기준 버블맵 - Tableau 자동 생성 위경도 필드 사용.
+    2025-08-20 실물 확인(사용자 스크린샷: 배경 지도 없이 원만 흰 배경 위에 표시됨) - 참고
+    자료/필터 예시.twbx의 필채운 지도 워크시트('Sample - Superstore', Multipolygon 마크)에서
+    <style-rule element='map-layer'>(개별 레이어 on/off) + <style-rule element='map'>
+    <format attr='washout'>(배경 지도 불투명도, 0.0=완전히 보임) 블록을 발견 - 이게 없으면
+    배경 타일 레이어 자체가 비활성 상태로 저장되는 것으로 추정. 동일한 레이어 on/off 값을
+    그대로 재사용(도로/토지피복/국가경계/주(州)경계 on, 해안선/카운티/우편번호 등은 off)."""
     lat = col_instance("Latitude (generated)", "None")
     lon = col_instance("Longitude (generated)", "None")
     ctry = col_instance("claim_country", "None")
     mci = col_instance("claim_amount_usd", "Sum")
     filt_cis, filters_xml, slices_xml = common_filter_block()
     deps = datasource_dependencies([lat, lon, ctry, mci] + filt_cis, sheet_name=name)
-    style_block = worksheet_style_block(mark_color=NAVY_2)
+    style_block = """        <style>
+          <style-rule element='header'>
+            <format attr='display' scope='rows' value='false' />
+            <format attr='display' scope='cols' value='false' />
+          </style-rule>
+          <style-rule element='mark'>
+            <format attr='mark-color' value='%s' />
+          </style-rule>
+          <style-rule element='map-layer'>
+            <format attr='enabled' id='tab_base' value='true' />
+            <format attr='enabled' id='um_lcover' value='true' />
+            <format attr='enabled' id='tab_coastline' value='false' />
+            <format attr='enabled' id='pp2_line' value='false' />
+            <format attr='enabled' id='light_adm0_bnd' value='false' />
+            <format attr='enabled' id='light_adm0_lbl' value='false' />
+            <format attr='enabled' id='um_adm0_bnd' value='true' />
+            <format attr='enabled' id='um_adm0_lbl' value='true' />
+            <format attr='enabled' id='light_pp2_statebounds' value='false' />
+            <format attr='enabled' id='light_pp2_statelabels' value='false' />
+            <format attr='enabled' id='pp2_adminlabels' value='false' />
+            <format attr='enabled' id='pp2_statebounds' value='true' />
+            <format attr='enabled' id='pp2_statelabels' value='true' />
+            <format attr='enabled' id='countybounds' value='false' />
+            <format attr='enabled' id='countylabels' value='false' />
+            <format attr='enabled' id='zipbounds' value='false' />
+            <format attr='enabled' id='ziplabels' value='false' />
+            <format attr='enabled' id='tab_areabounds' value='false' />
+            <format attr='enabled' id='tab_arealabels' value='false' />
+            <format attr='enabled' id='tab_msabounds' value='false' />
+            <format attr='enabled' id='tab_msalabels' value='false' />
+          </style-rule>
+          <style-rule element='map'>
+            <format attr='washout' value='0.0' />
+          </style-rule>
+        </style>""" % NAVY_2
     return f"""    <worksheet name='{name}'>
       <table>
         <view>
@@ -1078,17 +1141,16 @@ DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name i
 
 def gnb_column(current_dash):
     """좌측 메뉴바(GNB) - 대시보드 기획안.html의 .sidebar 구조·폰트·색상 그대로 재현:
-    로고 이미지(.brand-logo) + "Corporation"(.brand-corp) + "Quality Claims Dashboard"
-    태그라인(.brand-tagline) + 대시보드별 이동 항목(활성/비활성 대비) + 하단 캡션
-    (.sidebar-mini-foot). 대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성."""
+    로고 이미지(.brand-logo) + 대시보드별 이동 항목(활성/비활성 대비) + 하단 캡션
+    (.sidebar-mini-foot). 대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성.
+    사용자 요청(2025-08-20)으로 "Corporation"/"Quality Claims Dashboard" 텍스트는 제거하고
+    로고 아래 여백만 조금 두고 바로 탐색 버튼이 오도록 단순화."""
     logo = W(6, ("logo",))
-    corp = W(3, ("text", "Corporation", 9, MUTED))
-    tagline = W(4, ("text", "Quality Claims Dashboard", 10, NAVY_2))
-    spacer = W(2, ("empty",))
+    spacer = W(4, ("empty",))
     buttons = [W(3, ("navbutton", n, n == current_dash)) for n in DASH_NAMES]
-    filler = W(62, ("empty",))
+    filler = W(63, ("empty",))
     footer = W(4, ("text", "Synthetic Data", 9, MUTED))
-    return ("vert", [logo, corp, tagline, spacer] + buttons + [filler, footer])
+    return ("vert", [logo, spacer] + buttons + [filler, footer])
 
 
 # 최종 페이지 트리 = 좌측 GNB(고정 폭) + 기존 콘텐츠(나머지 폭). 실물 파일의 "GNB 컬럼 +
