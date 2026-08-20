@@ -426,6 +426,9 @@ NAVY = "#16324f"
 NAVY_2 = "#1f4e79"
 GOOD = "#2a7f62"
 GRAY_BAR = "#c8d3e0"
+AMBER = "#d98c1f"
+MUTED = "#7c8494"
+BORDER_GRAY = "#e2e6ec"
 STATUS_COLOR_MAP = {"접수": "#d98c1f", "조사중": "#e2a53a", "확정": "#1f4e79", "기각": "#9aa4b2", "보상완료": "#2a7f62"}
 SEVERITY_COLOR_MAP = {"Critical": "#c0392b", "Major": "#d98c1f", "Minor": "#7a8699"}
 
@@ -962,16 +965,17 @@ DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name i
 
 
 def gnb_column(current_dash):
-    """좌측 메뉴바(GNB) - 기획안 사이드바처럼 위에 워드마크, 그 아래 대시보드별 이동 항목을
-    짧고 촘촘하게 배치(이전엔 버튼 비중이 너무 커서 항목 사이 간격이 과하게 벌어졌음).
-    대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성 스타일. 실물 파일(참고
-    자료/태블로 예시.twbx)의 GNB 사이드바 구조 재현: fixed-size 폭 고정 컬럼 + 아래 여백은
-    <empty>로 채움."""
-    wordmark = W(8, ("text", "SL Corporation", 16, TITLE_COLOR))
+    """좌측 메뉴바(GNB) - 대시보드 기획안.html의 .sidebar 구조·폰트·색상 그대로 재현:
+    (로고 대신) "SL Corporation" 워드마크 + "Quality Claims Dashboard" 태그라인(.brand-tagline과
+    동일하게 남색-2/굵게) + 대시보드별 이동 항목(활성/비활성 대비) + 하단 캡션(.sidebar-mini-foot).
+    대시보드마다 자기 자신 항목은 강조(활성) 스타일, 나머지는 비활성 스타일."""
+    brand = W(6, ("text", "SL Corporation", 15, TITLE_COLOR))
+    tagline = W(4, ("text", "Quality Claims Dashboard", 10, NAVY_2))
     spacer = W(2, ("empty",))
     buttons = [W(3, ("navbutton", n, n == current_dash)) for n in DASH_NAMES]
-    filler = W(81, ("empty",))
-    return ("vert", [wordmark, spacer] + buttons + [filler])
+    filler = W(65, ("empty",))
+    footer = W(4, ("text", "Synthetic Data", 9, MUTED))
+    return ("vert", [brand, tagline, spacer] + buttons + [filler, footer])
 
 
 # 최종 페이지 트리 = 좌측 GNB(고정 폭) + 기존 콘텐츠(나머지 폭). 실물 파일의 "GNB 컬럼 +
@@ -1157,15 +1161,28 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         # 이 플래그 없이는 로더가 button-in-zone/window simple-id를 아예 모르는 스키마로
         # 검증하다가 거부했던 것. WORKBOOK 템플릿에 이 manifest를 추가했으니 버튼을 다시 복원.
         # 배경색(활성 #555555 / 비활성 #e6e6e6)도 이번 실물 예시 값 그대로 사용.
+        # 기획안 .nav-item / .nav-item.active CSS 그대로: 활성은 남색(#16324f) 배경 + 흰 글씨 +
+        # 왼쪽 amber(#d98c1f) 강조선, 비활성은 흰 배경 + 어두운 텍스트(#1c2430). 왼쪽 강조선은
+        # zone-style의 border-*-left 속성(StyleAttribute-ST에 border-color-left/border-style-left/
+        # border-width-left가 개별로 존재 - 일반 border와 별개로 확인됨)으로 구현.
         target_dash, is_active = node[1], node[2]
         zid = id_gen()
         guid = DASHBOARD_WINDOW_GUIDS[target_dash]
-        bg = "#555555" if is_active else "#e6e6e6"
+        if is_active:
+            fontcolor, bg = "#ffffff", NAVY
+            left_border = (
+                f"              <format attr='border-color-left' value='{AMBER}' />\n"
+                f"              <format attr='border-style-left' value='solid' />\n"
+                f"              <format attr='border-width-left' value='3' />\n"
+            )
+        else:
+            fontcolor, bg = "#1c2430", "#ffffff"
+            left_border = ""
         return (f"          <zone h='{h}' id='{zid}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
                 f"            <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
                 f"              <button-visual-state>\n"
                 f"                <caption>{target_dash}</caption>\n"
-                f"                <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />\n"
+                f"                <button-caption-font-style fontcolor='{fontcolor}' fontname='Tableau Bold' fontsize='12' />\n"
                 f"                <format attr='background-color' value='{bg}' />\n"
                 f"              </button-visual-state>\n"
                 f"            </button>\n"
@@ -1173,6 +1190,7 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
                 f"              <format attr='border-color' value='#000000' />\n"
                 f"              <format attr='border-style' value='none' />\n"
                 f"              <format attr='border-width' value='0' />\n"
+                f"{left_border}"
                 f"              <format attr='margin' value='4' />\n"
                 f"            </zone-style>\n"
                 f"          </zone>")
