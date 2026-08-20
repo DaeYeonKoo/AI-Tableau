@@ -950,6 +950,12 @@ PAGE_CONTENT = {
 
 DASH_NAMES = list(PAGE_CONTENT.keys())
 
+# 탐색 버튼의 action="tabdoc:goto-sheet window-id=..."이 가리킬 대상 - 대시보드 window의
+# <simple-id>. 사용자가 Tableau UI에서 직접 만들어 저장한 실물 2025.3 결과물에서, 버튼이
+# 하나도 없는 대시보드(1. 종합 요약 자기 자신)를 포함해 대시보드 창 3개 전부에 simple-id가
+# 붙어 있는 것으로 확인 - 그래서 아래 window 조립부에서도 대시보드 3개 전부에 무조건 부여.
+DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name in DASH_NAMES}
+
 
 def gnb_column(current_dash):
     """좌측 메뉴바(GNB) - 기획안 사이드바처럼 위에 워드마크, 그 아래 대시보드별 이동 항목을
@@ -1139,29 +1145,44 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "navbutton":
-        # <button> 기반 탐색 버튼은 네 번(직접/is-fixed+zone-style 포함/중첩 zone 포함) 전부
-        # 정확히 같은 이유로 실제 2025.3 로드에서 거부됨 - "element 'button' is not allowed
-        # for content model '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'" -
-        # 중첩해도 안쪽 zone에 동일한 content model이 그대로 적용됨(2025-08-20 확인). 참고
-        # 자료 3개 전부 이 방식보다 오래됐거나(2024.2.1) 아예 다른 시대(v10.5/2021.3) 파일이라
-        # 2025.3 실제 저장 포맷과 다른 것으로 최종 결론 - 실물 2025.3 참고 예시 없이는 더 이상
-        # 재시도하지 않음. 클릭 가능한 이동은 Tableau UI에서 "탐색" 개체를 직접 추가해야 함.
-        # 여기서는 클릭은 안 되지만 좌측 메뉴바의 "모양"(현재 페이지 강조)만 유지.
+        # 사용자가 Tableau UI에서 "종합 요약" 대시보드에 직접 탐색 버튼을 추가해서 저장한 실물
+        # 2025.3 결과물(대시보드/SL_Corporation_Quality_Claims.twb, 2025-08-20)에서 그대로
+        # 확인한 구조 - 이전 4번의 손수 작성 시도와 달리 is-fixed/fixed-size/zone-style이
+        # 전혀 없는 훨씬 단순한 형태였음:
+        #   <zone type-v2='dashboard-object' ...>
+        #     <button action="tabdoc:goto-sheet window-id=&quot;{GUID}&quot;" button-type='text'>
+        #       <button-visual-state>
+        #         <caption>대상 대시보드 이름</caption>
+        #         <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />
+        #         <format attr='background-color' value='#333333' />
+        #       </button-visual-state>
+        #     </button>
+        #   </zone>
+        # window-id는 대상 <window class='dashboard'>의 <simple-id>와 일치(이 실물 파일은
+        # 대시보드 3개 창 전부에 simple-id가 붙어 있었음 - DASHBOARD_WINDOW_GUIDS로 재현).
+        # 현재 페이지 자기 자신은 클릭할 필요가 없으니 기존처럼 강조 스타일의 일반 텍스트로 유지.
         target_dash, is_active = node[1], node[2]
         zid = id_gen()
         if is_active:
-            fontcolor, bg = "#ffffff", TITLE_COLOR
-        else:
-            fontcolor, bg = "#333333", "#f5f5f5"
-        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
-                f"            <formatted-text><run bold='true' fontcolor='{fontcolor}' fontsize='12'>{target_dash}</run></formatted-text>\n"
-                f"            <zone-style>\n"
-                f"              <format attr='border-color' value='#000000' />\n"
-                f"              <format attr='border-style' value='none' />\n"
-                f"              <format attr='border-width' value='0' />\n"
-                f"              <format attr='margin' value='0' />\n"
-                f"              <format attr='background-color' value='{bg}' />\n"
-                f"            </zone-style>\n"
+            return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
+                    f"            <formatted-text><run bold='true' fontcolor='#ffffff' fontsize='12'>{target_dash}</run></formatted-text>\n"
+                    f"            <zone-style>\n"
+                    f"              <format attr='border-color' value='#000000' />\n"
+                    f"              <format attr='border-style' value='none' />\n"
+                    f"              <format attr='border-width' value='0' />\n"
+                    f"              <format attr='margin' value='0' />\n"
+                    f"              <format attr='background-color' value='{TITLE_COLOR}' />\n"
+                    f"            </zone-style>\n"
+                    f"          </zone>")
+        guid = DASHBOARD_WINDOW_GUIDS[target_dash]
+        return (f"          <zone h='{h}' id='{zid}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
+                f"              <button-visual-state>\n"
+                f"                <caption>{target_dash}</caption>\n"
+                f"                <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />\n"
+                f"                <format attr='background-color' value='#333333' />\n"
+                f"              </button-visual-state>\n"
+                f"            </button>\n"
                 f"          </zone>")
 
     children = [(_c[2], _c[1]) if _c[0] == "w" else (_c, 1) for _c in node[1]]  # (node, weight)
@@ -1281,13 +1302,14 @@ for dn, sheets in PAGE_SHEETS.items():
         for sn in sheets
     )
     active_id = zone_ids[sheets[0]]
-    # <window class='dashboard'>의 <simple-id>는 REAL 2025.3 로드에서 매번 거부됨(위 navbutton
-    # 주석 참고) - 그래서 DASHBOARD_WINDOW_GUIDS는 더 이상 window에 쓰지 않음(navbutton이
-    # 텍스트로 대체되면서 참조할 데도 없어짐).
+    # <window class='dashboard'>의 <simple-id> - 사용자가 Tableau UI에서 직접 만든 실물
+    # 2025.3 결과물에서 대시보드 창 3개 전부(버튼이 없는 것 포함)에 붙어 있는 것으로 확인,
+    # 탐색 버튼의 window-id가 가리키는 대상이 이 값.
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
         f"      <active id='{active_id}' />\n"
+        f"      <simple-id uuid='{DASHBOARD_WINDOW_GUIDS[dn]}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
