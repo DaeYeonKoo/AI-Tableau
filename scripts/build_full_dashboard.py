@@ -1139,33 +1139,22 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "navbutton":
-        # 4번째 시도(실험적, 저신뢰): <button>을 dashboard-object zone에 직접 넣는 방식은
-        # 3번 연속 동일한 이유로 거부됨 - 실제 오류 문구가 "element 'button' is not allowed
-        # for content model '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'"로,
-        # 이 content model이 명시적으로 허용하는 유일한 자식은 중첩된 <zone>뿐이라는 단서에
-        # 착안해 이번엔 dashboard-object zone을 한 겹 더 감싸서(중첩) 안쪽 zone에 button을
-        # 넣어봄. 실물로 검증된 패턴이 아니라 순수 추정 - 실패해도 놀랍지 않음. 이것마저
-        # 실패하면 이 접근 자체를 접고 Tableau UI의 네이티브 "탐색" 개체를 쓰는 걸 권장.
+        # <button> 기반 탐색 버튼은 네 번(직접/is-fixed+zone-style 포함/중첩 zone 포함) 전부
+        # 정확히 같은 이유로 실제 2025.3 로드에서 거부됨 - "element 'button' is not allowed
+        # for content model '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'" -
+        # 중첩해도 안쪽 zone에 동일한 content model이 그대로 적용됨(2025-08-20 확인). 참고
+        # 자료 3개 전부 이 방식보다 오래됐거나(2024.2.1) 아예 다른 시대(v10.5/2021.3) 파일이라
+        # 2025.3 실제 저장 포맷과 다른 것으로 최종 결론 - 실물 2025.3 참고 예시 없이는 더 이상
+        # 재시도하지 않음. 클릭 가능한 이동은 Tableau UI에서 "탐색" 개체를 직접 추가해야 함.
+        # 여기서는 클릭은 안 되지만 좌측 메뉴바의 "모양"(현재 페이지 강조)만 유지.
         target_dash, is_active = node[1], node[2]
-        outer_id = id_gen()
-        inner_id = id_gen()
-        guid = "{" + str(uuid.uuid4()).upper() + "}"
+        zid = id_gen()
         if is_active:
-            caption_style = "<button-caption-font-style bold='true' fontcolor='#ffffff' fontname='Noto Sans KR' fontsize='12' />"
-            bg = TITLE_COLOR
+            fontcolor, bg = "#ffffff", TITLE_COLOR
         else:
-            caption_style = "<button-caption-font-style fontname='Noto Sans KR' fontsize='12' />"
-            bg = "#f5f5f5"
-        return (f"          <zone{fixed_attrs()} h='{h}' id='{outer_id}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
-                f"            <zone h='{h}' id='{inner_id}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
-                f"              <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
-                f"                <button-visual-state>\n"
-                f"                  <caption>{target_dash}</caption>\n"
-                f"                  {caption_style}\n"
-                f"                  <format attr='background-color' value='{bg}' />\n"
-                f"                </button-visual-state>\n"
-                f"              </button>\n"
-                f"            </zone>\n"
+            fontcolor, bg = "#333333", "#f5f5f5"
+        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <formatted-text><run bold='true' fontcolor='{fontcolor}' fontsize='12'>{target_dash}</run></formatted-text>\n"
                 f"            <zone-style>\n"
                 f"              <format attr='border-color' value='#000000' />\n"
                 f"              <format attr='border-style' value='none' />\n"
