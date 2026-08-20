@@ -657,4 +657,145 @@ CSV/텍스트 파일 연결은 Tableau 내부에서 `federated` 데이터소스�
 - [집계 함수](https://help.tableau.com/current/pro/desktop/ko-kr/calculations_calculatedfields_aggregate_create.htm)
 - [매개 변수 만들기](https://help.tableau.com/current/pro/desktop/ko-kr/parameters_create.htm)
 - [필터 액션](https://help.tableau.com/current/pro/desktop/ko-kr/actions_filter.htm)
+
+---
+
+## 15. 실물 참고 파일 3종 심층 분석 (2026-08-20)
+
+`참고 자료/` 폴더의 실제 Tableau workbook 3개(`.twbx` → `.twb` 추출)를 통째로 뜯어서 확인한
+내용. **주의**: 셋 다 우리 타깃(2025.3)이 아닌 다른 버전으로 저장됨 — ①`태블로 예시.twbx`
+(Tableau 2024.2.1, 실제 완료된 PoC, 65개 워크시트/3개 대시보드), ②`필터 예시.twbx`
+("Reset filter sample", v10.5, 공개 샘플), ③`이중축 예시.twbx`(v18.1/2021.3.3). 버전이 다르면
+저장 포맷이 달라질 수 있다는 게 이미 실전으로 확인됨(§15-1 참고) — 그래서 아래 항목마다
+**우리 2025.3 실물 로드로 검증됐는지 여부**를 따로 표시함.
+
+### 15-1. ✅ 2025.3 로드 테스트 완료 — 실제로 동작 확인된 것
+
+이 프로젝트의 `SL_Corporation_Quality_Claims.twb`에 반영해서 실제 2025.3에서 정상 로드된 패턴:
+
+- **대시보드 zone 크기 고정**: `type-v2='layout-flow'` 컨테이너 자체는 맞지만, 안 그러면
+  Tableau가 내용 기준으로 크기를 재계산함 — `is-fixed='true' fixed-size='N'`을 붙여야 고정됨.
+  **N은 0~100000 좌표 스케일이 아니라 대시보드의 실제 픽셀 크기** (세로 흐름 부모면 높이,
+  가로 흐름 부모면 너비 기준). 형제 zone을 "동일 크기"로 맞추는 건 별도 속성 없이 그냥
+  동일한 w(또는 h) 값을 주는 것만으로 충분.
+- **매개변수 컨트롤**: `<zone type-v2='paramctrl' mode='datetime'|'compact'|'type_in' custom-title='true' param='[Parameters].[이름]'><formatted-text><run>라벨</run></formatted-text><zone-style>...</zone-style></zone>`.
+- **필터 드롭다운**(v10.5 파일에서 온 패턴이지만 `type-v2=`로 바꿔서 2025.3에 그대로 통과):
+  `<zone type-v2='filter' mode='checkdropdown' show-apply='true' name='<소유 워크시트>' param='[ds].[qualified-instance]'>`. `name=`은 그 필드를 Filters 선반에 올리고 "필터 표시"를 켠
+  워크시트를 가리켜야 함.
+- **이중축 콤보 차트**: `<rows>(fieldA + fieldB)</rows>`(괄호로 묶어 `+`로 결합) + `<panes>`에
+  기본 pane 1개(`mark='Automatic'`, 빈 encodings) + 필드마다 `y-axis-name='<qualified>'`를 가진
+  pane(각각 다른 `mark class`, 필요하면 pane 자체 `<style>`에 `mark-color` 지정).
+- **워크북 전역 폰트**: `<workbook><style><style-rule element='all'><format attr='font-family' value='Noto Sans KR' /></style-rule></style>` — workbook 최상위 `<style>`.
+- **필드 헤더(캡션) 숨김**: `<style-rule element='label'><format attr='display' field='[qualified]' value='false' /></style-rule>` — 필드별로 걸어야 함(전역 `element='header'` scope=rows/cols 토글은 효과 없었음, 확인됨).
+- **카테고리 색상 팔레트**: 워크시트가 아니라 **데이터소스** `<style>`에 `<style-rule element='mark'><encoding attr='color' field='[none:필드:nk]' type='palette'><map to='#hex'><bucket>&quot;값&quot;</bucket></map>...</encoding></style-rule>`.
+
+### 15-2. ❌ 2025.3 로드 테스트 완료 — 실물 파일에 있지만 우리 버전에서 거부된 것
+
+- **대시보드 탐색 버튼**: `<zone type-v2='dashboard-object'><button action="tabdoc:goto-sheet window-id=...">`. 세 번 시도(구조를 점점 더 실물과 똑같이) 전부 동일한 오류로 거부됨:
+  `element 'button' is not allowed for content model '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'`. **결론: 이 참고 파일들을 저장한 버전(2024.2.1/구버전)과 2025.3 사이에
+  대시보드 탐색 버튼의 저장 포맷 자체가 바뀐 것으로 보임 — 더 이상 이 방식으로 재시도하지
+  않기로 함.** 실제 클릭 이동이 필요하면 Tableau UI에서 "탐색" 개체를 직접 드래그(수 초짜리
+  네이티브 기능, 우리가 겪은 문제와 무관하게 동작).
+- **`<window class='dashboard'>`의 `<simple-id>`**: 위 버튼과 같은 이유로 함께 거부됨
+  (`'(viewpoints,active,device-preview)'`에 simple-id 자리가 없음). 탐색 버튼 없이는 필요도 없음.
+- **zone-style의 `corner-radius`**: `StyleAttribute-ST`에는 있는 값이지만 zone-style 레벨에서는
+  `value 'corner-radius' not in enumeration`으로 거부됨 — 카드 둥근 모서리는 포기, 사각 모서리로.
+
+### 15-3. 🆕 실물 파일에서 새로 확인 — 2025.3 로드 테스트는 아직 안 함
+
+이번 요청으로 다시 훑으면서 새로 찾은 것들. 아직 우리 워크북에 적용/검증 전이라 ⚠️ 취급.
+
+**액션(`<actions>`, `<action>`)** — `reference.twb:3739-3942`:
+```xml
+<action caption='F_VESP' name='[Action15_...]'>
+  <activation auto-clear='true' type='on-select' />
+  <source dashboard='선박수급현황' type='sheet' worksheet='1.1.1 지수 요약 - VESP' />
+  <link caption='F_VESP' delimiter=',' escape='\' expression='tsl:...' include-null='true' multi-select='true' url-escape='true' />
+  <command command='tsc:tsl-filter'>
+    <param name='exclude' value='시트1,시트2' />
+    <param name='target' value='선박수급현황' />
+  </command>
+</action>
+```
+- 필터 액션은 `command='tsc:tsl-filter'`, 하이라이트 액션은 `command='tsc:brush'`
+  (`activation type='on-hover'`, `<source>`가 `<exclude-sheet name='...'/>` 자식들을 가질 수 있음).
+- **매개변수 액션**은 `<action>`이 아니라 별도 최상위 엘리먼트 `<edit-parameter-action>`:
+  `<params><param name='source-field' value='[ds].[필드]' /><param name='target-parameter' value='[Parameters].[이름]' /></params>`.
+
+**툴팁/동적 라벨 (`<customized-tooltip>`, `<customized-label>`)** — `reference.twb:3999-4016`:
+```xml
+<customized-tooltip show-buttons='false'>
+  <formatted-text>
+    <run fontcolor='#787878'>기준일:</run>
+    <run bold='true'><![CDATA[<[federated.xxx].[usr:필드:ok]>]]></run>
+  </formatted-text>
+</customized-tooltip>
+```
+동적 필드 값은 `<![CDATA[<[datasource].[field]>]]>` (angle-bracket + CDATA). 워크시트/대시보드
+**제목**에서 매개변수를 보여줄 땐 다른 문법 — CDATA 없이 그냥 `<run>[Parameters].[이름]</run>`
+(리터럴 `<`/`>`는 `&lt;`/`&gt;`로 감싸서 별도 run으로) — "필터 결과: N건" 같은 라이브 텍스트에
+바로 응용 가능.
+
+**숫자/날짜 서식** — 필드의 `<column>` 정의에 `default-format` 속성으로 지정, 축 눈금 라벨은
+이 값을 그대로 상속(워크시트별 axis 서식 오버라이드는 실물에서 못 찾음):
+```xml
+<column caption='p_기준일' datatype='date' default-format='*YYYY년 MM월' name='[...]' .../>
+<column caption='증감율' datatype='real' default-format='p0.00%' .../>
+<column .../ default-format='*#,##0' .../>
+```
+워크시트 안에서 특정 필드 표시값만 오버라이드하려면 `<style-rule element='cell'><format attr='text-format' field='[qualified]' value='n#,##0.00;-#,##0.00' /></style-rule>`.
+
+**정렬** — 수동 정렬(순서 명시):
+```xml
+<default-sorts>
+  <sort class='manual' column='[none:필드:nk]' direction='ASC'>
+    <dictionary><bucket>&quot;값1&quot;</bucket><bucket>&quot;값2&quot;</bucket></dictionary>
+  </sort>
+</default-sorts>
+```
+계산된 정렬(측정값 기준): `<sort class='computed' column='[ds].[none:필드:nk]' direction='DESC' using='[ds].[sum:측정값:qk]' />` (워크시트 `<view>` 안에 인라인).
+
+**LOD 표현식 / 테이블 계산** — LOD는 그냥 계산식 문자열 안에 `{FIXED [필드]: MIN(...)}` 그대로
+씀(별도 XML 마커 없음). 테이블 계산은 `<calculation>`의 자식으로 `<table-calc ordering-type='Rows' />`가 붙음:
+```xml
+<column ...><calculation class='tableau' formula='INDEX()'><table-calc ordering-type='Rows' /></calculation></column>
+```
+
+**범례 zone**: 별도 `type-v2='legend'`는 없고, **`type-v2='color'`** zone이 범례 역할(그 워크시트를
+가리키는 `pane-specification-id` + 필드를 가리키는 `param` 속성으로 위치만 잡음).
+
+**참조선(reference line)**: `<pane>` 안, `<encodings>` 바로 뒤에 옵니다:
+```xml
+<reference-line axis-column='[ds].[필드]' formula='total' label='&lt;Value&gt;' label-type='custom' scope='per-pane' value-column='[ds].[측정값]' z-order='1' />
+```
+
+**그룹(Group)** — Top-N 필터 그룹(매개변수로 개수 제어):
+```xml
+<group name='[Top Customers by Profit]' name-style='unqualified' user:ui-builder='filter-group'>
+  <groupfilter count='[Parameters].[Parameter 1]' end='top' function='end' units='records'>
+    <groupfilter direction='DESC' expression='SUM([Profit])' function='order'>
+      <groupfilter function='level-members' level='[필드]' user:ui-enumeration='all' />
+    </groupfilter>
+  </groupfilter>
+</group>
+```
+사용자가 만드는 **Set**(`user:ui-builder='set-builder'` 같은 마커) 실물 예시는 못 찾음 — 못 찾았다는
+사실만 기록, 추정 금지.
+
+**지도 관련**: `<mapsources><mapsource name='Tableau' /></mapsources>`(워크북 레벨), 지리적 역할은
+컬럼의 `semantic-role='[Geographical].[Latitude]'` 같은 속성으로, 워크시트 지도 서식은
+`<style-rule element='map'><format attr='washout' value='0.0' /></style-rule>`.
+
+**존재하지 않는 것 확인** (추측 방지용): `type-v2='legend'` 없음(위 참고), 사용자 Set XML 마커
+못 찾음, 워크시트별 axis text-format 오버라이드 없음(필드 default-format이 축까지 결정).
+
+### 15-4. 향후 우선순위 제안
+
+이번 세션에서 KPI 카드/트렌드/필터박스 위주로 진행했으니, 다음에 손댈 만한 것 순서:
+1. **날짜 축 서식**(`default-format='*MM월'` 같은 걸 `OccurrenceMonth` 계산 필드의 `<column>`에
+   직접 걸기) — 지금 트렌드 차트 x축이 전체 날짜시간으로 지저분하게 나오는 문제 해결 가능성.
+2. **필터 결과 라이브 텍스트**(`<title>` + `<run>[Parameters]...` 패턴 응용, 단 이건 매개변수만
+   되고 실시간 "필터링된 행 수"는 별도 계산 워크시트가 필요할 수 있음).
+3. **필터 액션/하이라이트 액션** — 대시보드 요구사항.md에 있던 "카테고리 클릭 시 드릴다운"류
+   인터랙션에 `tsc:tsl-filter`/`tsc:brush` 패턴 적용.
 - [Tableau 도움말 홈](https://help.tableau.com/current/pro/desktop/ko-kr/default.htm)
