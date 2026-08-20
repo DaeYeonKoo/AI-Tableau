@@ -689,23 +689,53 @@ CSV/텍스트 파일 연결은 Tableau 내부에서 `federated` 데이터소스�
 - **필드 헤더(캡션) 숨김**: `<style-rule element='label'><format attr='display' field='[qualified]' value='false' /></style-rule>` — 필드별로 걸어야 함(전역 `element='header'` scope=rows/cols 토글은 효과 없었음, 확인됨).
 - **카테고리 색상 팔레트**: 워크시트가 아니라 **데이터소스** `<style>`에 `<style-rule element='mark'><encoding attr='color' field='[none:필드:nk]' type='palette'><map to='#hex'><bucket>&quot;값&quot;</bucket></map>...</encoding></style-rule>`.
 
-### 15-2. ❌ 2025.3 로드 테스트 완료 — 실물 파일에 있지만 우리 버전에서 거부된 것
+### 15-2. 대시보드 탐색 버튼 사가 — 6번 실패 후 진짜 원인 확정 (2025-08-20) ✅ 해결됨
 
-- **대시보드 탐색 버튼**: `<zone type-v2='dashboard-object'><button action="tabdoc:goto-sheet window-id=...">`. **다섯 번 시도, 전부 실패.** 처음 네 번은 손수 작성(직접 →
-  is-fixed/fixed-size/zone-style까지 완전 재현 → `<zone>` 중첩), 다섯 번째는 **사용자가
-  Tableau 2025.3 UI에서 직접 "탐색" 개체를 만들어 저장한 실물 결과물**(2025-08-20) — 그런데
-  이것마저 Tableau를 완전히 종료했다가 다시 여니 정확히 같은 오류로 거부됨:
-  `element 'button' is not allowed for content model '(formatted-text,layout-cache?,zone,flipboard,zone-style?)'`.
-  **최종 결론(확정): 이건 우리가 XML을 잘못 짜서가 아니라, Tableau 2025.3 이 빌드 자체가
-  대시보드 탐색 버튼을 "저장은 하지만 자기가 새로 열 땐 거부하는" 상태 — 즉 이 특정 기능에
-  한해 저장 포맷과 로드 포맷이 어긋나 있는 것으로 보임(제품 버그로 의심됨). 앞으로 이
-  기능은 어떤 형태로도 다시 시도하지 않음.** 클릭형 이동이 필요하면 대시보드 하단 시트
-  탭(항상 켜져 있어 이미 사용 가능)을 쓰는 게 유일하게 확실한 대안 — Tableau UI의 "탐색"
-  개체 자체가 이 환경에서는 재로드를 못 버틴다는 게 실물로 확인됐으므로 그마저도 권장하지 않음.
-- **`<window class='dashboard'>`의 `<simple-id>`**: 위 버튼과 같은 이유로 함께 거부됨
-  (`'(viewpoints,active,device-preview)'`에 simple-id 자리가 없음). 탐색 버튼 없이는 필요도 없음.
+**증상**: `<zone type-v2='dashboard-object'><button action="tabdoc:goto-sheet window-id=...">`을
+6번 시도(손수 작성 4번 + 사용자가 Tableau UI에서 직접 만든 실물 결과물 2번) 전부 정확히 같은
+오류로 거부됨: `element 'button' is not allowed for content model
+'(formatted-text,layout-cache?,zone,flipboard,zone-style?)'`. 심지어 **사용자가 직접 저장한
+파일을 Tableau 완전 재시작 후 다시 열어도 같은 오류가 났다가**, 사용자가 재차 확인해보니
+**자기 손을 거치지 않은 원본 파일은 재시작 후에도 정상적으로 열림** — 즉 문제는 Tableau
+자체가 아니라 우리가 이 스크립트로 재생성하는 과정에서 뭔가 빠뜨리고 있었다는 뜻이었음(이
+모순을 사용자가 직접 지적해서 재조사하게 됨 — 지레짐작으로 "Tableau 버그"라고 결론 내렸던
+게 성급했음을 인정).
+
+**진짜 원인**: 사용자의 정상 작동 파일과 우리 스크립트 출력을 줄 단위로 diff한 결과, 워크북
+최상위 `<document-format-change-manifest>`가 원인이었음. 우리는 계속 빈 태그
+(`<document-format-change-manifest />`)로 뒀는데, 실제 Tableau가 저장한 파일은 항상
+아래처럼 기능 플래그가 채워져 있었음:
+```xml
+<document-format-change-manifest>
+  <AnimationOnByDefault />
+  <BasicButtonObject />
+  <BasicButtonObjectTextSupport />
+  <MarkAnimation />
+  <ObjectModelEncapsulateLegacy />
+  <ObjectModelTableType />
+  <SchemaViewerObjectModel />
+  <SetMembershipControl />
+  <SheetIdentifierTracking />
+  <WindowsPersistSimpleIdentifiers />
+</document-format-change-manifest>
+```
+`<BasicButtonObject/>`+`<BasicButtonObjectTextSupport/>`가 button-in-zone을, `<WindowsPersistSimpleIdentifiers/>`가 `<window>`의 `<simple-id>`를 각각 활성화하는 것으로 보임 —
+**이 플래그들이 로더가 검증에 쓰는 스키마 분기 자체를 결정**하는 듯함. 플래그가 없으면
+로더가 button/window-simple-id를 아예 모르는 "기본" 스키마로 검증하다가 거부 — 그래서
+zone 구조를 아무리 실물과 똑같이 맞춰도(is-fixed, zone-style, 중첩 등) 매번 똑같이
+실패했던 것. **이 두 요소 자체는 처음부터 문법이 맞았음.**
+
+**조치**: `WORKBOOK` 템플릿의 `<document-format-change-manifest/>`를 위 10개 플래그 전체로
+채움(관련 없어 보이는 것도 혹시 몰라 전부 포함), `source-build`도 사용자의 실제 설치 버전
+(`2025.3.2 (20253.26.0109.0333)`)으로 맞춤. 탐색 버튼 + window `<simple-id>` 복원.
+
+**교훈**: "실물 예시를 그대로 베꼈는데도 안 되면 zone 구조가 아니라 워크북 최상위(manifest 등
+문서 전역 선언)를 의심할 것" — 다음에 비슷하게 "실물과 똑같이 했는데 매번 똑같이 거부"되는
+패턴을 마주치면 이 섹션부터 다시 볼 것.
+
 - **zone-style의 `corner-radius`**: `StyleAttribute-ST`에는 있는 값이지만 zone-style 레벨에서는
   `value 'corner-radius' not in enumeration`으로 거부됨 — 카드 둥근 모서리는 포기, 사각 모서리로.
+  (이건 manifest와 무관 — 여전히 유효한 제약사항.)
 
 ### 15-3. 🆕 실물 파일에서 새로 확인 — 2025.3 로드 테스트는 아직 안 함
 
