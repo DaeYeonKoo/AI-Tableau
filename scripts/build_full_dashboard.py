@@ -950,6 +950,9 @@ PAGE_CONTENT = {
 
 DASH_NAMES = list(PAGE_CONTENT.keys())
 
+# 탐색 버튼의 window-id가 가리킬 대상 - 대시보드 window의 <simple-id>.
+DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name in DASH_NAMES}
+
 
 def gnb_column(current_dash):
     """좌측 메뉴바(GNB) - 기획안 사이드바처럼 위에 워드마크, 그 아래 대시보드별 이동 항목을
@@ -1139,21 +1142,31 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "navbutton":
-        # <button> 기반 탐색 버튼: 6번 시도(그중 2번은 사용자가 Tableau UI에서 직접 만든 실물
-        # 결과물) 전부 완전 재시작 로드에서 동일한 오류로 거부됨(2025-08-20). 원인 규명이 끝날
-        # 때까지 파일이 우선 정상적으로 열리도록 안전한 상태(클릭 안 되는 강조 텍스트)로 되돌림.
+        # 실제 원인 확정(2025-08-20): <button>/window <simple-id>가 6번 연속 거부된 진짜 이유는
+        # zone 구조가 아니라, 워크북 최상위 <document-format-change-manifest>가 비어 있었기
+        # 때문이었음. 사용자가 저장한 실물 파일(완전 재시작 후 정상 로드 확인됨)의 manifest에
+        # <BasicButtonObject/><BasicButtonObjectTextSupport/><WindowsPersistSimpleIdentifiers/>
+        # 등 기능 플래그가 선언돼 있었고, 이게 로더의 스키마 분기 자체를 바꾸는 것으로 확인 -
+        # 이 플래그 없이는 로더가 button-in-zone/window simple-id를 아예 모르는 스키마로
+        # 검증하다가 거부했던 것. WORKBOOK 템플릿에 이 manifest를 추가했으니 버튼을 다시 복원.
+        # 배경색(활성 #555555 / 비활성 #e6e6e6)도 이번 실물 예시 값 그대로 사용.
         target_dash, is_active = node[1], node[2]
         zid = id_gen()
-        fontcolor = "#ffffff" if is_active else "#333333"
-        bg = TITLE_COLOR if is_active else "#f5f5f5"
-        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
-                f"            <formatted-text><run bold='true' fontcolor='{fontcolor}' fontsize='12'>{target_dash}</run></formatted-text>\n"
+        guid = DASHBOARD_WINDOW_GUIDS[target_dash]
+        bg = "#555555" if is_active else "#e6e6e6"
+        return (f"          <zone h='{h}' id='{zid}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
+                f"              <button-visual-state>\n"
+                f"                <caption>{target_dash}</caption>\n"
+                f"                <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />\n"
+                f"                <format attr='background-color' value='{bg}' />\n"
+                f"              </button-visual-state>\n"
+                f"            </button>\n"
                 f"            <zone-style>\n"
                 f"              <format attr='border-color' value='#000000' />\n"
                 f"              <format attr='border-style' value='none' />\n"
                 f"              <format attr='border-width' value='0' />\n"
-                f"              <format attr='margin' value='0' />\n"
-                f"              <format attr='background-color' value='{bg}' />\n"
+                f"              <format attr='margin' value='4' />\n"
                 f"            </zone-style>\n"
                 f"          </zone>")
 
@@ -1274,12 +1287,11 @@ for dn, sheets in PAGE_SHEETS.items():
         for sn in sheets
     )
     active_id = zone_ids[sheets[0]]
-    # <window class='dashboard'>의 <simple-id>는 탐색 버튼이 안전 상태로 되돌아가면서 참조할
-    # 데가 없어져 다시 제거.
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
         f"      <active id='{active_id}' />\n"
+        f"      <simple-id uuid='{DASHBOARD_WINDOW_GUIDS[dn]}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
@@ -1292,9 +1304,20 @@ BASE_COLUMNS_XML = build_base_columns()
 
 WORKBOOK = f"""<?xml version='1.0' encoding='utf-8' ?>
 
-<workbook original-version='18.1' source-build='2025.3.0' source-platform='win' version='18.1'
+<workbook original-version='18.1' source-build='2025.3.2 (20253.26.0109.0333)' source-platform='win' version='18.1'
           xmlns:user='http://www.tableausoftware.com/xml/user'>
-  <document-format-change-manifest />
+  <document-format-change-manifest>
+    <AnimationOnByDefault />
+    <BasicButtonObject />
+    <BasicButtonObjectTextSupport />
+    <MarkAnimation />
+    <ObjectModelEncapsulateLegacy />
+    <ObjectModelTableType />
+    <SchemaViewerObjectModel />
+    <SetMembershipControl />
+    <SheetIdentifierTracking />
+    <WindowsPersistSimpleIdentifiers />
+  </document-format-change-manifest>
   <preferences />
   <style>
     <style-rule element='all'>
