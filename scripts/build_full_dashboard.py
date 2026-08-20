@@ -950,6 +950,10 @@ PAGE_CONTENT = {
 
 DASH_NAMES = list(PAGE_CONTENT.keys())
 
+# 탐색 버튼의 window-id가 가리킬 대상 - 대시보드 window의 <simple-id>. 자기 자신을 가리키는
+# 버튼도 포함하므로(6번째 실물 예시 확인) 대시보드 3개 전부에 부여.
+DASHBOARD_WINDOW_GUIDS = {name: "{" + str(uuid.uuid4()).upper() + "}" for name in DASH_NAMES}
+
 
 def gnb_column(current_dash):
     """좌측 메뉴바(GNB) - 기획안 사이드바처럼 위에 워드마크, 그 아래 대시보드별 이동 항목을
@@ -1139,27 +1143,30 @@ def render_layout(node, id_gen, with_style, x, y, w, h, sheet_zone_ids, flow_dir
         return f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='empty' w='{w}' x='{x}' y='{y}'>{style}\n          </zone>"
 
     if kind == "navbutton":
-        # <button> 기반 탐색 버튼: 다섯 번째이자 마지막 시도까지 실패 확정(2025-08-20). 이번엔
-        # 손으로 만든 게 아니라 사용자가 Tableau UI에서 직접 "탐색" 개체를 만들어 저장한 실물
-        # 결과물 그대로였는데도, Tableau를 완전히 종료했다가 다시 여니 정확히 같은 오류
-        # ("element 'button' is not allowed for content model ...")로 거부됨. 즉 이 문제는
-        # 우리가 XML을 잘못 짜서가 아니라 - Tableau 2025.3 자체가 "저장은 되지만 자기가 새로
-        # 열 땐 거부하는" 상태(저장 포맷과 로드 포맷이 이 버전에서 서로 어긋남)라는 뜻. 이 접근은
-        # 완전히 접음 - 더 이상 어떤 변형도 시도하지 않음. 클릭형 이동이 필요하면 대시보드
-        # 하단의 시트 탭(이미 항상 켜져 있음)을 쓰거나, 좌측 메뉴바는 아래처럼 클릭 안 되는
-        # 강조 텍스트로만 "현재 위치"를 보여주는 용도로 유지.
+        # 사용자가 Tableau UI에서 다시 한번 직접 만들어 저장한 실물 2025.3 결과물(2025-08-20,
+        # 6번째 시도) - 이전(5번째) 예시와 달리 이번엔 대시보드 3개 전부에 버튼이 있고(자기
+        # 자신을 가리키는 버튼 포함), 버튼 zone에 <zone-style>이 붙어 있는 것도 새로 확인된
+        # 차이. 자기 자신 버튼은 배경 #333333(진하게 강조), 다른 대시보드로 가는 버튼은
+        # #d4d4d4(연하게)로 구분. 이 구조를 그대로 재현해서 다시 검증 - 이전 5회(그중 1회는
+        # 실물 UI 결과물)는 전부 완전 재로드에서 거부됐으므로, 이번에도 실패할 가능성을 열어두고
+        # 사용자에게 다시 완전 재시작 테스트를 요청할 것.
         target_dash, is_active = node[1], node[2]
         zid = id_gen()
-        fontcolor = "#ffffff" if is_active else "#333333"
-        bg = TITLE_COLOR if is_active else "#f5f5f5"
-        return (f"          <zone{fixed_attrs()} h='{h}' id='{zid}' type-v2='text' w='{w}' x='{x}' y='{y}'>\n"
-                f"            <formatted-text><run bold='true' fontcolor='{fontcolor}' fontsize='12'>{target_dash}</run></formatted-text>\n"
+        guid = DASHBOARD_WINDOW_GUIDS[target_dash]
+        bg = "#333333" if is_active else "#d4d4d4"
+        return (f"          <zone h='{h}' id='{zid}' type-v2='dashboard-object' w='{w}' x='{x}' y='{y}'>\n"
+                f"            <button action='tabdoc:goto-sheet window-id=&quot;{guid}&quot;' button-type='text'>\n"
+                f"              <button-visual-state>\n"
+                f"                <caption>{target_dash}</caption>\n"
+                f"                <button-caption-font-style fontcolor='#ffffff' fontname='Tableau Bold' fontsize='12' />\n"
+                f"                <format attr='background-color' value='{bg}' />\n"
+                f"              </button-visual-state>\n"
+                f"            </button>\n"
                 f"            <zone-style>\n"
                 f"              <format attr='border-color' value='#000000' />\n"
                 f"              <format attr='border-style' value='none' />\n"
                 f"              <format attr='border-width' value='0' />\n"
-                f"              <format attr='margin' value='0' />\n"
-                f"              <format attr='background-color' value='{bg}' />\n"
+                f"              <format attr='margin' value='4' />\n"
                 f"            </zone-style>\n"
                 f"          </zone>")
 
@@ -1280,15 +1287,13 @@ for dn, sheets in PAGE_SHEETS.items():
         for sn in sheets
     )
     active_id = zone_ids[sheets[0]]
-    # <window class='dashboard'>의 <simple-id>는 탐색 버튼 자체가 확정 폐기되면서 (아래
-    # navbutton 분기 주석 참고) 참조할 데가 없어짐 - 다시 뺌. 이 조합(button + window
-    # simple-id)은 손수 작성 4회 + 사용자가 Tableau UI로 직접 만든 실물 1회, 총 5번 전부
-    # 완전 종료 후 재로드에서 동일하게 거부됨 - Tableau 2025.3 자체의 저장/로드 포맷 불일치로
-    # 최종 결론.
+    # <window class='dashboard'>의 <simple-id> - 탐색 버튼(자기 자신 포함)이 window-id로
+    # 참조하는 대상. 6번째 실물 예시(2025-08-20)에서 다시 확인된 구조 그대로 재현.
     window_blocks.append(
         f"    <window class='dashboard' name='{dn}'>\n"
         f"      <viewpoints>\n{viewpoints_xml}\n      </viewpoints>\n"
         f"      <active id='{active_id}' />\n"
+        f"      <simple-id uuid='{DASHBOARD_WINDOW_GUIDS[dn]}' />\n"
         f"    </window>"
     )
 WINDOWS_XML = "\n".join(window_blocks)
